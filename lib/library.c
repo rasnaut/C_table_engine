@@ -27,11 +27,16 @@ int core_insert(const char* insert_key,unsigned int insert_info, Table* table)
         printf("core_insert error: table is NULL\n");
         return -1; //ÐžÑˆÐ¸Ð±ÐºÐ° Ð² Ð²Ñ…Ð¾Ð´Ð½Ñ‹Ñ… Ð´Ð°Ð½Ð½Ñ‹Ñ…
     }
-    if(table->size == table->max_size) 
+    if(table->size == table->max_size) {
+        printf("table is oversize\n");
         return 1; // переполнение таблицы
+    }
+        
     
-    if(core_binary_search(insert_key,table) != -1) 
-        return -1; // данные с таким ключом уже существуют
+    if(core_binary_search(insert_key,table) != -1) {
+        printf("key already exists\n");
+        return -1; // ключ уже существует
+    }
     
     
     int insert_index = table->size; // потенциально опасный индекс, может быть 0
@@ -42,6 +47,7 @@ int core_insert(const char* insert_key,unsigned int insert_info, Table* table)
         insert_index--; 
     }
     if( keyspace_create(&table->ks[insert_index], insert_key, insert_info) == NULL) {
+        printf("keyspace_create error\n");
         return -1; // ошибка создания ключа
     }
     table->size++;

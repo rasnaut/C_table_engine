@@ -70,3 +70,11 @@ void test_range_search() {
     free_table(sub);
     free_table(table);
 }
+
+int main() {
+    test_init_and_insert();
+    test_search_and_delete();
+    test_range_search();
+    printf("✅ All tests passed!\n");
+    return 0;
+}
