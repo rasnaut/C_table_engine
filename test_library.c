@@ -11,8 +11,9 @@ void test_init_and_insert() {
     assert(core_init_table(table, 10) != NULL);
     assert(table->size == 0);
     assert(table->max_size == 10);
-
-    assert(core_insert("alpha", 42, table) == 0);
+    int res = core_insert("alpha", 42, table);
+    printf("res = %d\n", res);
+    assert(res == 0);
     assert(table->size == 1);
     assert(strcmp(table->ks[0].key, "alpha") == 0);
     assert(table->ks[0].info == 42);
@@ -72,6 +73,7 @@ void test_range_search() {
 }
 
 int main() {
+    setbuf(stdout, NULL);  // отключает буфер stdout
     test_init_and_insert();
     test_search_and_delete();
     test_range_search();
