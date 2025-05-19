@@ -1,4 +1,6 @@
 #include "key.h"
+#include <stdlib.h>   // free, malloc, NULL
+#include <string.h> 
 
 KeySpace* keyspace_create(KeySpace* ks, const char* key, unsigned int info) {
     if (!ks || !key) return NULL;
