@@ -7,7 +7,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-void* core_init_table(Table* table,size_t initial_size) 
+Table* core_init_table(Table* table,size_t initial_size) 
 {
   if(table != NULL) {
     table->ks = malloc(initial_size * sizeof(KeySpace));

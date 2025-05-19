@@ -8,7 +8,7 @@ typedef struct Table {
     int max_size; // лучше использовать size_t        
 } Table;
 
-void core_init_table(Table* table, const int initial_size) ;
+Table* core_init_table(Table* table, const size_t initial_size);
 int core_insert(const char* insert_key,const unsigned int insert_info, Table* table);
 int core_binary_search(const char* search_key,Table* table);
 int core_delete(const char* delete_key,Table* table);

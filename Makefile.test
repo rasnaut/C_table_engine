@@ -2,19 +2,21 @@
 
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -I./lib
-LDLIBS = -lm
+LDFLAGS = 
+LDLIBS = -lreadline -lncurses -lm
 
-SRC = test_table.c
-LIB_OBJS = lib/library.o lib/work_library.o lib/dialogue.o
+SRC = test_library.c
+LIB_SRC = lib/library.c lib/work_library.c lib/dialogue.c
+LIB_OBJS = $(LIB_SRC:.c=.o)
 LIB_STATIC = libmylib.a
 
-TEST_BIN = test_table
+TEST_BIN = test_library
 
 # Сборка тестов
 all: $(TEST_BIN)
 
 $(TEST_BIN): $(SRC) $(LIB_STATIC)
-	$(CC) $(CFLAGS) $(SRC) $(LIB_STATIC) -o $(TEST_BIN) $(LDLIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) $(LIB_STATIC) -o $@ $(LDLIBS)
 
 $(LIB_STATIC): $(LIB_OBJS)
 	ar rcs $@ $^

@@ -1,14 +1,11 @@
-
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11
-LDFLAGS = -L./lib
+LDFLAGS = -L.
 LDLIBS = -lreadline -lmylib  
-
 
 SRC_DIR = lib
 MAIN_SRC = main.c
 TARGET = program
-
 
 all: $(TARGET)
 
