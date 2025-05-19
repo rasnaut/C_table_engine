@@ -9,7 +9,7 @@ KeySpace* keyspace_create(KeySpace* ks, const char* key, unsigned int info) {
     if (!ks->key) return NULL;
 
     ks->info = info;
-    return 0;
+    return ks;
 }
 
 void keyspace_destroy(KeySpace* ks) {
