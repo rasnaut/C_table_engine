@@ -2,15 +2,16 @@
 #include <stdlib.h>   // free, malloc, NULL
 #include <string.h> 
 
-KeySpace* keyspace_create(KeySpace* ks, const char* key, unsigned int info) {
-    if (!ks || !key) return NULL;
+// KeySpace keyspace_create(const char* key, unsigned int info) {
+//     KeySpace ks;
+//     if (!key) return ks;
 
-    ks->key = strdup(key);
-    if (!ks->key) return NULL;
+//     ks.key = strdup(key);
+//     if (!ks.key) return ks;
 
-    ks->info = info;
-    return ks;
-}
+//     ks.info = info;
+//     return ks;
+// }
 
 void keyspace_destroy(KeySpace* ks) {
     if (!ks) return;

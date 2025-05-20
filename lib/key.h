@@ -7,7 +7,7 @@ typedef struct KeySpace {
     } KeySpace;
 
 
-KeySpace* keyspace_create(KeySpace* ks, const char* key, unsigned int info);
+//KeySpace keyspace_create(const char* key, unsigned int info);
 void keyspace_destroy(KeySpace* ks);
 
 

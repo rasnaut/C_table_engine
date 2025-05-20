@@ -1,11 +1,12 @@
-﻿#include <stdlib.h>
+﻿#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "library.h"
 #include "work_library.h"
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
-#endif
 
 Table* core_init_table(Table* table,size_t initial_size) 
 {
@@ -46,12 +47,16 @@ int core_insert(const char* insert_key,unsigned int insert_info, Table* table)
         table->ks[insert_index].info = table->ks[insert_index-1].info;
         insert_index--; 
     }
-    if( keyspace_create(&table->ks[insert_index], insert_key, insert_info) == NULL) {
-        printf("keyspace_create error\n");
+    
+    if (!insert_key) return NULL;
+    table->ks[insert_index].key = strdup(insert_key);
+    if( table->ks[insert_index].key == NULL) {
+        //printf("keyspace_create error\n");
         return -1; // ошибка создания ключа
     }
+    table->ks[insert_index].info = insert_info;
+    
     table->size++;
-        
     return 0;
 }
 
@@ -92,13 +97,12 @@ int core_delete(const char* delete_key,Table* table)
     if(found == -1) 
         return -1;// key not found
     
-    keyspace_destroy(&table->ks[found]);
-    table->size -= 1;
+   
     for(int i = found; i < table->size - 1; i++)
     {
         table->ks[i] = table->ks[i + 1];
     }
-    
+    table->size -= 1;
     return 0;
 }
 
@@ -109,7 +113,7 @@ void core_print_table(Table* table)
 
     printf("---Table output---\nSize:%d,\nMaxSize:%d\n",table->size,table->max_size);
     for (int i = 0; i < table->size; i++) {
-        printf("|Key:%s|Info:%p|\n",table->ks[i].key,table->ks[i].info);
+        printf("|Key:%s|Info:%d|\n",table->ks[i].key,table->ks[i].info);
     }
 
 }
@@ -149,10 +153,11 @@ Table* core_range_search(const char* start_key, const char* end_key, Table* tabl
         return NULL;
    
     int start_index = core_binary_left(start_key, table);
-    if(strcmp(table->ks[start_index].key, start_key) <= 0)
+    if(strcmp(table->ks[start_index].key, start_key) < 0)
         start_index++;
 
     int end_index = core_binary_left(end_key, table);
+    printf("sub table start index: %d, end_index: %d\n", start_index, end_index);
 
     if (start_index > end_index)
         return NULL;
@@ -169,10 +174,19 @@ Table* core_range_search(const char* start_key, const char* end_key, Table* tabl
     new_table->size = count;
     
     for (int i = 0; i < count; i++) {
-        const KeySpace* src = &table->ks[start_index + i];
+        const KeySpace src = table->ks[start_index + i];
         KeySpace* dst = &new_table->ks[i];
 
-        if (keyspace_create(dst, src->key, src->info) == NULL) {
+        if (src.key != NULL) 
+        {
+            new_table->ks[i].key = strdup(src.key);
+            if( new_table->ks[i].key == NULL) {
+                free_partial_table(new_table, i);
+                return NULL; // ошибка создания ключа
+            }
+            new_table->ks[i].info = src.info;
+        }
+        else {
             free_partial_table(new_table, i);
             return NULL;
         }

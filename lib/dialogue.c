@@ -22,6 +22,11 @@ int init_table(Table* table)
 
 int insert(Table* table)
 {
+    if(table == NULL) {
+        printf("Error: Table is null\n");
+        return 1;
+    }
+
     char* insert_key = readline("Enter key: ");
     if (!insert_key) return -1;
     
@@ -130,7 +135,7 @@ Table* special_search(Table* table, int* eof_tmp)
         return NULL;
     }
     
-    Table* res = core_special_search(start_key, end_key, table);
+    Table* res = core_range_search(start_key, end_key, table);
     free(start_key);
     free(end_key);
     

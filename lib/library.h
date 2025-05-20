@@ -9,13 +9,15 @@ typedef struct Table {
 } Table;
 
 Table* core_init_table(Table* table, const size_t initial_size);
-int core_insert(const char* insert_key,const unsigned int insert_info, Table* table);
+int core_insert(const char *insert_key, const unsigned int insert_info, Table *table);
 int core_binary_search(const char* search_key,Table* table);
 int core_delete(const char* delete_key,Table* table);
 void core_print_table(Table* table);
 void free_table(Table* table);
+void free_partial_table(Table* table, int filled_count);
+
 
 Table* core_file_import(Table* table,const char* file_name);
-Table* core_special_search(const char* start_key, const char* end_key, Table* table);
+Table* core_range_search(const char* start_key, const char* end_key, Table* table);
 
 #endif

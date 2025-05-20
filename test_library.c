@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "library.h"
 #include "work_library.h"
 
@@ -12,18 +13,12 @@ void test_init_and_insert() {
     assert(core_init_table(table, 10) != NULL);
     assert(table->size == 0);
     assert(table->max_size == 10);
-    int res = core_insert("alpha", 42, table);
-    printf("res = %d\n", res);
-    assert(res == 0);
+    assert(core_insert("alpha\0", 42, table) == 0);
     assert(table->size == 1);
-    KeySpace* ks = table->ks;
-    assert(ks != NULL);
-    printf("1 ");
-    assert(strcmp(table->ks[0].key, "alpha") == 0);
-    printf("2 ");
+    assert(table->ks != NULL);
     
-    printf("3 ");    
-    //assert(table->ks[0].info == 42);
+    assert(strcmp(table->ks[0].key, "alpha") == 0);
+    
     printf("middle part done\n");
     
 
@@ -50,15 +45,20 @@ void test_search_and_delete() {
 
     int idx = core_binary_search("b", table);
     assert(idx != -1);
+    printf("core_binary_search execute 1 ... passed\n");
     assert(strcmp(table->ks[idx].key, "b") == 0);
+    printf("core_binary_search check 1 ... passed\n");
 
     // Удалим и проверим, что его больше нет
     assert(core_delete("b", table) == 0);
+    printf("core_delete 1 ... passed\n");
     assert(core_binary_search("b", table) == -1);
+    printf("core_binary_search execute 2 ... passed\n");
     assert(table->size == 2);
 
     // Удаление несуществующего
     assert(core_delete("zzz", table) == -1);
+    printf("core_delete 2 ... passed\n");
 
     free_table(table);
     printf("Test search and delete passed!\n");
@@ -75,12 +75,16 @@ void test_range_search() {
     core_insert("date", 4, table);
     core_insert("fig", 5, table);
 
+    core_print_table(table);
+
     Table* sub = core_range_search("banana", "date", table);
+    core_print_table(sub);
     assert(sub != NULL);
+    printf("sub->size == %d\n", sub->size);
     assert(sub->size == 2); // banana и carrot
     assert(strcmp(sub->ks[0].key, "banana") == 0);
     assert(strcmp(sub->ks[1].key, "carrot") == 0);
-
+    
     free_table(sub);
     free_table(table);
     printf("Test range search passed!\n");
