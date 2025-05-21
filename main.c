@@ -44,11 +44,13 @@ int main()
             if(special_search(table,&eof_tmp)==NULL && eof_tmp == -1) return -1;
             break;
         case 7:
+            free_table(table);
             return 0;
         default:
             printf("Error. No such operation\n");
             break;
         }
     }
+    free_table(table);
     return 0;
 }

@@ -29,3 +29,10 @@ run: $(TEST_BIN)
 
 clean:
 	rm -f lib/*.o $(TEST_BIN) $(LIB_STATIC)
+
+build_debug:
+	$(MAKE) clean
+	$(MAKE) CFLAGS="-Wall -Wextra -std=c11 -g -O0 -I./lib"
+
+valgrind: build_debug
+	valgrind --leak-check=full --error-exitcode=1 ./$(TEST_BIN)

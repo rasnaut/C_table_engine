@@ -199,8 +199,10 @@ Table* core_range_search(const char* start_key, const char* end_key, Table* tabl
 void free_partial_table(Table* table, int filled_count) {
     if (!table) return;
 
-    for (int i = 0; i < filled_count; i++)
-        keyspace_destroy(&table->ks[i]);
+    for (int i = 0; i < filled_count; i++) {
+        free(table->ks[i].key);
+        table->ks[i].key = NULL;
+    }
 
     free(table->ks);
     free(table);
