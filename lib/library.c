@@ -95,9 +95,8 @@ int core_delete(const char* delete_key,Table* table)
 {
     int found = core_binary_search(delete_key,table);
     if(found == -1) 
-        return -1;// key not found
+        return -1; // key not found
     
-   
     for(int i = found; i < table->size - 1; i++)
     {
         table->ks[i] = table->ks[i + 1];
