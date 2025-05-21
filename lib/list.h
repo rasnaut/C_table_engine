@@ -16,4 +16,7 @@ Node* node_find(Node* head, RelType release);
 int node_delete(Node** head, RelType release);
 void node_destroy(Node* head);
 
+void print_list(const Node* head);
+
+
 #endif

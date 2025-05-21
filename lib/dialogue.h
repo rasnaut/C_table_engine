@@ -4,11 +4,11 @@
 
 int init_table(const Table* table);
 int insert(const Table* table);
-int binary_search(Table* table);
+int search_key(Table* table);
 int T_delete(Table* table);
+int clear_table(Table* table);
 void print_table(Table* table);
 
 Table* file_import(Table* table,int* eof_tmp);
-Table* special_search(Table* table,int* eof_tmp);
 
 #endif

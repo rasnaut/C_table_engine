@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "list.h"
 
 Node* node_create(InfoType info, RelType release) {
@@ -66,5 +67,13 @@ void node_destroy(Node* head) {
         free(curr->info);
         free(curr);
         curr = next;
+    }
+}
+
+void print_list(const Node* head) {
+    const Node* curr = head;
+    while (curr) {
+        printf("  [release: %u] value: %u\n", curr->release, *(unsigned int*)curr->info);
+        curr = curr->next;
     }
 }

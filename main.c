@@ -18,8 +18,7 @@ int main()
         printf("3 - Removing an element from a table\n");
         printf("4 - Outputting a table to the console\n");
         printf("5 - Importing a table from a file\n");
-        printf("6 - Special operation - searching in a range:\n");
-        printf("7 - Exit\n");
+        printf("6 - Exit\n");
 
         int input = atoi(readline(""));
 
@@ -29,7 +28,7 @@ int main()
             if(insert(table) == -1) return -1;
             break;
         case 2:
-            if(binary_search(table)==-1) return -1;
+            if(search_key(table)==-1) return -1;
             break;
         case 3:
             if(T_delete(table) == -1) return -1;
@@ -41,9 +40,6 @@ int main()
             if(file_import(table,&eof_tmp)==NULL && eof_tmp == -1) return -1;
             break;
         case 6:
-            if(special_search(table,&eof_tmp)==NULL && eof_tmp == -1) return -1;
-            break;
-        case 7:
             return 0;
         default:
             printf("Error. No such operation\n");
