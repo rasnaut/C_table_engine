@@ -1,14 +1,12 @@
 #ifndef KEY_H
 #define KEY_H
+#include "list.h"
 
 typedef struct KeySpace {
-    char* key;
-    unsigned int info; // зачем хранить указатель, если можно хранить значение? размеры идентичны
-    } KeySpace;
-
-
-//KeySpace keyspace_create(const char* key, unsigned int info);
-void keyspace_destroy(KeySpace* ks);
+    unsigned int busy; // флаг занятости
+    char* key;         // строковый ключ
+    Node* node;        // указатель на цепочку значений
+} KeySpace;
 
 
 #endif

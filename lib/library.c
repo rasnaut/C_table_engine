@@ -40,14 +40,14 @@ int core_insert(const char* insert_key, unsigned int insert_info, Table* table) 
         // Пустая ячейка — вставляем
         slot->busy = 1;
         slot->key = strdup(insert_key);
-        slot->node = node_insert(NULL, info_copy(insert_info));
+        slot->node = node_insert(NULL, insert_info);
         table->size++;
         return 0;
     }
 
     // Уже есть данные — проверим ключ
     if (strcmp(slot->key, insert_key) == 0) {
-        slot->node = node_insert(slot->node, info_copy(insert_info));
+        slot->node = node_insert(slot->node, insert_info);
         return 0;
     }
 

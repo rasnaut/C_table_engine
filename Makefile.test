@@ -6,7 +6,7 @@ LDFLAGS =
 LDLIBS = -lreadline -lncurses -lm
 
 SRC = test_library.c
-LIB_SRC = lib/library.c lib/work_library.c lib/dialogue.c lib/key.c
+LIB_SRC = lib/library.c lib/work_library.c lib/dialogue.c
 LIB_OBJS = $(LIB_SRC:.c=.o)
 LIB_STATIC = libmylib.a
 

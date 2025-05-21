@@ -141,3 +141,4 @@ Table* file_import(Table* table, int* eof_tmp)
 
     printf("✅ Table successfully imported\n");
     return res;
+}

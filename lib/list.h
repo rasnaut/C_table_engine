@@ -2,7 +2,7 @@
 #define NODE_LIST_H
 
 typedef unsigned int RelType;
-typedef void* InfoType;
+typedef unsigned int InfoType;
 
 typedef struct Node {
     RelType release;
