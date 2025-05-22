@@ -5,6 +5,20 @@
 #include "library.h"
 #include "work_library.h"
 
+
+void test_init_and_free() {
+    printf("Testing init and free...\n");
+    Table* table = malloc(sizeof(Table));
+    assert(table != NULL);
+
+    assert(core_init_table(table, 10) != NULL);
+    assert(table->size == 0);
+    assert(table->max_size == 10);
+    
+    free_table(table);
+    printf("Test init and insert passed!\n");
+}
+
 void test_init_and_insert() {
     printf("Testing init and insert...\n");
     Table* table = malloc(sizeof(Table));
@@ -30,6 +44,12 @@ void test_init_and_insert() {
     // вставка дубликата
     assert(core_insert("alpha", 99, table) == -1);
 
+    free_partial_table(table, table->size);
+    assert(table->ks != NULL);
+    for(int index = 0; index < table->size; index++) {
+        assert(table->ks[index].key == NULL);
+    }
+    printf("All indx cleaned\n");
     free_table(table);
     printf("Test init and insert passed!\n");
 }

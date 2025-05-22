@@ -19,4 +19,5 @@ jobs:
 
     - name: 🔧 Build and run tests
       run: |
+        make -f Makefile.test
         make -f Makefile.test valgrind

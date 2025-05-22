@@ -48,7 +48,7 @@ int core_insert(const char* insert_key,unsigned int insert_info, Table* table)
         insert_index--; 
     }
     
-    if (!insert_key) return NULL;
+    if (!insert_key) return 1; //
     table->ks[insert_index].key = strdup(insert_key);
     if( table->ks[insert_index].key == NULL) {
         //printf("keyspace_create error\n");
@@ -97,7 +97,7 @@ int core_delete(const char* delete_key,Table* table)
     if(found == -1) 
         return -1;// key not found
     
-   
+    free(table->ks[found].key);
     for(int i = found; i < table->size - 1; i++)
     {
         table->ks[i] = table->ks[i + 1];
@@ -121,7 +121,9 @@ void core_print_table(Table* table)
 //ÐžÑÐ²Ð¾Ð±Ð¾Ð¶Ð´ÐµÐ½Ð¸Ðµ Ð¿Ð°Ð¼ÑÑ‚Ð¸
 void free_table(Table* table) 
 {
-    free_partial_table(table, table->size);      
+    free_partial_table(table, table->size);
+    free(table->ks);
+    free(table);     
 }
 
 Table* core_file_import(Table* table,const char* file_name)
@@ -175,19 +177,18 @@ Table* core_range_search(const char* start_key, const char* end_key, Table* tabl
     
     for (int i = 0; i < count; i++) {
         const KeySpace src = table->ks[start_index + i];
-        KeySpace* dst = &new_table->ks[i];
-
+        
         if (src.key != NULL) 
         {
             new_table->ks[i].key = strdup(src.key);
             if( new_table->ks[i].key == NULL) {
-                free_partial_table(new_table, i);
+                free_table(new_table);
                 return NULL; // ошибка создания ключа
             }
             new_table->ks[i].info = src.info;
         }
         else {
-            free_partial_table(new_table, i);
+            free_table(new_table);
             return NULL;
         }
     }
@@ -198,12 +199,15 @@ Table* core_range_search(const char* start_key, const char* end_key, Table* tabl
 
 void free_partial_table(Table* table, int filled_count) {
     if (!table) return;
-
+    if(filled_count > table->size)
+        filled_count = table->size;
     for (int i = 0; i < filled_count; i++) {
-        free(table->ks[i].key);
-        table->ks[i].key = NULL;
-    }
+        if(table->ks[i].key != NULL) {
+            free(table->ks[i].key);
+            table->ks[i].key = NULL;
+        }
+        
 
-    free(table->ks);
-    free(table);
+    }
+    table->size -= filled_count;
 }
