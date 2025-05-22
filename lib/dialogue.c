@@ -118,13 +118,13 @@ Table* file_import(Table* table, int* eof_tmp)
     return res;
 }
 
-Table* special_search(Table* table, int* eof_tmp)
+int special_search(Table* table, int* eof_tmp)
 {
     char* start_key = readline("Enter the initial key: ");
     if (!start_key) 
     {
         *eof_tmp = -1;
-        return NULL;
+        return 1;
     }
     
     char* end_key = readline("Enter the final key: ");
@@ -132,7 +132,7 @@ Table* special_search(Table* table, int* eof_tmp)
     {
         free(start_key);
         *eof_tmp = -1;
-        return NULL;
+        return 1;
     }
     
     Table* res = core_range_search(start_key, end_key, table);
@@ -142,7 +142,10 @@ Table* special_search(Table* table, int* eof_tmp)
     if (res == NULL) 
     {
         printf("Error: Invalid range entered/memory allocated\n");
-        return NULL;
+        return 1;
     }
-    return res;
+    printf("Print sub table:\n");
+    print_table(res);
+    free_table(res);
+    return 0;
 }

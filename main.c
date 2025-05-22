@@ -21,7 +21,9 @@ int main()
         printf("6 - Special operation - searching in a range:\n");
         printf("7 - Exit\n");
 
-        int input = atoi(readline(""));
+        char* input_str = readline("Enter comand number: ");
+        int input = atoi(input_str);
+        free(input_str);
 
         switch (input)
         {
@@ -41,7 +43,7 @@ int main()
             if(file_import(table,&eof_tmp)==NULL && eof_tmp == -1) return -1;
             break;
         case 6:
-            if(special_search(table,&eof_tmp)==NULL && eof_tmp == -1) return -1;
+            if(special_search(table,&eof_tmp)!=0 && eof_tmp == -1) return -1;
             break;
         case 7:
             free_table(table);
