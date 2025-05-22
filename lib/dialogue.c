@@ -133,9 +133,21 @@ Table* file_import(Table* table, int* eof_tmp)
 
     Table* res = core_file_import(table, file_name);
     free(file_name);
+    
+    if (res == NULL) 
+    {
+        printf("Error: File not found/invalid data entry\n");
+        return NULL;
+    }
+    return res;
+}
 
-    if (!res) {
-        printf("❌ Error: File not found or invalid data\n");
+Table* special_search(Table* table, int* eof_tmp)
+{
+    char* start_key = readline("Enter the initial key: ");
+    if (!start_key) 
+    {
+        *eof_tmp = -1;
         return NULL;
     }
 

@@ -2,7 +2,7 @@ name: Build and Test Table Library
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "**" ]
   pull_request:
     branches: [ main ]
 
@@ -15,9 +15,9 @@ jobs:
       uses: actions/checkout@v3
 
     - name: 🛠 Install build tools
-      run: sudo apt update && sudo apt install -y build-essential && sudo apt install -y libreadline-dev
+      run: sudo apt update && sudo apt install -y build-essential libreadline-dev valgrind
 
     - name: 🔧 Build and run tests
       run: |
         make -f Makefile.test
-        make -f Makefile.test run
+        make -f Makefile.test valgrind

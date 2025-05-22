@@ -20,7 +20,9 @@ int main()
         printf("5 - Importing a table from a file\n");
         printf("6 - Exit\n");
 
-        int input = atoi(readline(""));
+        char* input_str = readline("Enter comand number: ");
+        int input = atoi(input_str);
+        free(input_str);
 
         switch (input)
         {
@@ -40,11 +42,13 @@ int main()
             if(file_import(table,&eof_tmp)==NULL && eof_tmp == -1) return -1;
             break;
         case 6:
+            free_table(table);
             return 0;
         default:
             printf("Error. No such operation\n");
             break;
         }
     }
+    free_table(table);
     return 0;
 }

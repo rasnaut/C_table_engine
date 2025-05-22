@@ -23,3 +23,10 @@ $(SRC_DIR)/%.o: $(SRC_DIR)/%.c
 
 clean:
 	rm -f $(TARGET) libmylib.a $(SRC_DIR)/*.o
+
+build_debug:
+	$(MAKE) clean
+	$(MAKE) CFLAGS="-Wall -Wextra -std=c11 -g -O0 -I./lib"
+
+valgrind: build_debug
+	valgrind --leak-check=full --error-exitcode=1 ./$(TARGET)
