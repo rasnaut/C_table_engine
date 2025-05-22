@@ -50,7 +50,6 @@ int node_delete(Node** head, RelType release) {
             if (prev) prev->next = curr->next;
             else *head = curr->next;
 
-            free(curr->info);
             free(curr);
             return 0;
         }
@@ -64,7 +63,6 @@ void node_destroy(Node* head) {
     Node* curr = head;
     while (curr) {
         Node* next = curr->next;
-        free(curr->info);
         free(curr);
         curr = next;
     }
@@ -73,7 +71,7 @@ void node_destroy(Node* head) {
 void print_list(const Node* head) {
     const Node* curr = head;
     while (curr) {
-        printf("  [release: %u] value: %u\n", curr->release, *(unsigned int*)curr->info);
+        printf("  [release: %u] value: %u\n", curr->release, curr->info);
         curr = curr->next;
     }
 }

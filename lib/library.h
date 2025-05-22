@@ -4,18 +4,19 @@
 
 typedef struct Table {
     KeySpace* ks;
-    int size;  // лучше использовать size_t     
-    int max_size; // лучше использовать size_t        
+    size_t size;  // лучше использовать size_t     
+    size_t max_size; // лучше использовать size_t        
 } Table;
 
 Table* core_init_table(Table* table, const size_t initial_size);
 int core_insert(const char *insert_key, const unsigned int insert_info, Table *table);
 
+int add_node(KeySpace *slot, const char *insert_key, unsigned int insert_info, Table *table);
+
 int core_delete(const char* delete_key,Table* table);
 void core_print_table(Table* table);
 
-Node* core_search(const char* key, const Table* table);
-Node* core_search_by_hash(unsigned long full_hash, const Table* table);
+KeySpace* core_search(const char* key, const Table* table);
 Node* core_search_by_key_and_release(const char* key, RelType release, const Table* table);
 int core_delete_by_key_and_release(const char* key, RelType release, Table* table);
 

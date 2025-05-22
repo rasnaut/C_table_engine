@@ -5,6 +5,7 @@
 typedef struct KeySpace {
     unsigned int busy; // флаг занятости
     char* key;         // строковый ключ
+    size_t list_length;
     Node* node;        // указатель на цепочку значений
 } KeySpace;
 

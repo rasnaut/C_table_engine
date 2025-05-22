@@ -118,7 +118,7 @@ void print_table(Table* table) {
 int clear_table(Table* table)
 {
     if (!table) return -1;
-    core_clear_table(table);
+    free_table(table);
     printf("✅ Table cleared\n");
     return 0;
 }
@@ -142,15 +142,15 @@ Table* file_import(Table* table, int* eof_tmp)
     return res;
 }
 
-Table* special_search(Table* table, int* eof_tmp)
+int special_search(Table* table, int* eof_tmp)
 {
     char* start_key = readline("Enter the initial key: ");
     if (!start_key) 
     {
         *eof_tmp = -1;
-        return NULL;
+        return 1;
     }
 
     printf("✅ Table successfully imported\n");
-    return res;
+    return 0;
 }

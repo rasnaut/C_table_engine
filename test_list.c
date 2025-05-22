@@ -17,15 +17,14 @@ void test_insert() {
     Node* list = NULL;
 
     for (int i = 0; i < 5; ++i) {
-        int* value = malloc(sizeof(int));
-        *value = i * 10;
+        int value = i * 10;
         list = node_insert(list, value);
         CHECK(list != NULL, "Insert: list non-null after insertion");
     }
 
     Node* n = node_find(list, 3);
     CHECK(n != NULL, "Insert: node with release 3 exists");
-    CHECK(*(int*)n->info == 30, "Insert: node with release 3 has correct value");
+    CHECK(n->info == 30, "Insert: node with release 3 has correct value");
 
     node_destroy(list);
 }
@@ -33,13 +32,12 @@ void test_insert() {
 void test_find() {
     Node* list = NULL;
 
-    int* val = malloc(sizeof(int));
-    *val = 42;
+    int val = 42;
     list = node_insert(list, val);
 
     Node* found = node_find(list, 1);
     CHECK(found != NULL, "Find: found node with release 1");
-    CHECK(*(int*)found->info == 42, "Find: correct value found");
+    CHECK(found->info == 42, "Find: correct value found");
 
     Node* not_found = node_find(list, 99);
     CHECK(not_found == NULL, "Find: non-existent release not found");
@@ -51,9 +49,7 @@ void test_delete() {
     Node* list = NULL;
 
     for (int i = 0; i < 3; ++i) {
-        int* value = malloc(sizeof(int));
-        *value = i + 1;
-        list = node_insert(list, value);
+        list = node_insert(list, i + 1);
     }
 
     CHECK(node_delete(&list, 2) == 0, "Delete: removed release 2");
@@ -68,9 +64,7 @@ void test_destroy() {
     Node* list = NULL;
 
     for (int i = 0; i < 10; ++i) {
-        int* value = malloc(sizeof(int));
-        *value = i;
-        list = node_insert(list, value);
+        list = node_insert(list, i);
     }
 
     node_destroy(list);

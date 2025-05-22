@@ -5,12 +5,12 @@ CFLAGS = -Wall -Wextra -std=c11 -I./lib
 LDFLAGS = 
 LDLIBS = -lreadline -lncurses -lm
 
-SRC = test_library.c
-LIB_SRC = lib/library.c lib/work_library.c
+SRC = test_list.c
+LIB_SRC = lib/list.c 
 LIB_OBJS = $(LIB_SRC:.c=.o)
-LIB_STATIC = libmylib.a
+LIB_STATIC = lib_list_test.a
 
-TEST_BIN = test_library
+TEST_BIN = test_list
 
 # Сборка тестов
 all: $(TEST_BIN)

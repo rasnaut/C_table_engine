@@ -20,6 +20,7 @@ Table* core_init_table(Table* table, size_t initial_size) {
 
         for (size_t i = 0; i < initial_size; i++) {
             table->ks[i].busy = 0;
+            table->ks[i].list_length = 0;
             table->ks[i].key = NULL;
             table->ks[i].node = NULL;
         }
@@ -36,20 +37,10 @@ int core_insert(const char* insert_key, unsigned int insert_info, Table* table) 
 
     KeySpace* slot = &table->ks[index];
 
-    if (!slot->busy) {
-        // Пустая ячейка — вставляем
-        slot->busy = 1;
-        slot->key = strdup(insert_key);
-        slot->node = node_insert(NULL, insert_info);
-        table->size++;
-        return 0;
-    }
-
-    // Уже есть данные — проверим ключ
-    if (strcmp(slot->key, insert_key) == 0) {
-        slot->node = node_insert(slot->node, insert_info);
-        return 0;
-    }
+    
+    int retVal = add_node(slot, insert_key, insert_info, table);
+    if (retVal != 0)
+        return retVal;
 
     // Коллизия — разные ключи по одному индексу
     fprintf(stderr, "core_insert error: collision at index %zu (keys '%s' vs '%s')\n",
@@ -57,6 +48,29 @@ int core_insert(const char* insert_key, unsigned int insert_info, Table* table) 
     return -1;
 }
 
+int add_node(KeySpace *slot, const char *insert_key, unsigned int insert_info, Table *table)
+{
+    if (!slot->busy)
+    {
+        // Пустая ячейка — вставляем
+        slot->busy = 1;
+        slot->key = strdup(insert_key);
+        slot->node = node_insert(NULL, insert_info);
+        slot->list_length++;
+        table->size++;
+        return 0;
+    }
+
+    // Уже есть данные — проверим ключ
+    if (strcmp(slot->key, insert_key) == 0)
+    {
+        slot->list_length++;
+        slot->node = node_insert(slot->node, insert_info);
+        return 0;
+    }
+    
+    return 1;
+}
 
 //Ð£Ð´Ð°Ð»ÐµÐ½Ð¸Ðµ
 int core_delete(const char* key, Table* table) {
@@ -73,6 +87,7 @@ int core_delete(const char* key, Table* table) {
         slot->key = NULL;
         slot->node = NULL;
         slot->busy = 0;
+        slot->list_length = 0;
         table->size--;
         return 0;
     }
@@ -80,7 +95,7 @@ int core_delete(const char* key, Table* table) {
     return -1; // not found
 }
 
-Node* core_search(const char* key, const Table* table) {
+KeySpace* core_search(const char* key, const Table* table) {
     if (!table || !key || table->max_size == 0)
         return NULL;
 
@@ -90,21 +105,16 @@ Node* core_search(const char* key, const Table* table) {
     KeySpace* slot = &table->ks[index];
 
     if (slot->busy && slot->key && strcmp(slot->key, key) == 0) {
-        return slot->node;
+        return slot;
     }
 
     return NULL;  // либо пусто, либо другой ключ (коллизия)
 }
 
 Node* core_search_by_key_and_release(const char* key, RelType release, const Table* table) {
-    if (!table || !key || table->max_size == 0)
-        return NULL;
-
-    unsigned long hash = djb2_hash(key);
-    size_t index = hash % table->max_size;
-
-    KeySpace* slot = &table->ks[index];
-    if (slot->busy && strcmp(slot->key, key) == 0) {
+    KeySpace* slot = NULL;
+    slot = core_search(key, table);
+    if (slot != NULL && slot->node != NULL) {
         return node_find(slot->node, release);
     }
 
@@ -127,6 +137,7 @@ int core_delete_by_key_and_release(const char* key, RelType release, Table* tabl
             free(slot->key);
             slot->key = NULL;
             slot->busy = 0;
+            slot->list_length = 0;
             table->size--;
         }
 
@@ -136,13 +147,12 @@ int core_delete_by_key_and_release(const char* key, RelType release, Table* tabl
     return -1;
 }
 
-
 //Ð’Ñ‹Ð²Ð¾Ð´ Ð² ÐºÐ¾Ð½ÑÐ¾Ð»ÑŒ
 void core_print_table(Table* table)
 {
     if (!table) return;
 
-    printf("---Table output---\nSize:%d,\nMaxSize:%d\n",table->size,table->max_size);
+    printf("---Table output---\nSize:%ld,\nMaxSize:%ld\n",table->size,table->max_size);
     for (size_t i = 0; i < table->max_size; ++i) {
         const KeySpace* slot = &table->ks[i];
         if (slot->busy && slot->key) {
@@ -171,7 +181,9 @@ void free_table(Table* table)
         }
     }
 
-    table->size = 0;   
+    table->size = 0;
+    free(table->ks);
+    free(table);   
 }
 
 Table* core_file_import(Table* table, const char* file_name) {
