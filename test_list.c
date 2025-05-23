@@ -15,10 +15,11 @@
 
 void test_insert() {
     Node* list = NULL;
-
+    
     for (int i = 0; i < 5; ++i) {
         int value = i * 10;
-        list = node_insert(list, value);
+        list = node_insert(list, value, NULL);
+        fprintf(stdout, "Insert iteration %d ", i);
         CHECK(list != NULL, "Insert: list non-null after insertion");
     }
 
@@ -33,9 +34,10 @@ void test_find() {
     Node* list = NULL;
 
     int val = 42;
-    list = node_insert(list, val);
+    RelType release = -1;
+    list = node_insert(list, val, &release);
 
-    Node* found = node_find(list, 1);
+    Node* found = node_find(list, release);
     CHECK(found != NULL, "Find: found node with release 1");
     CHECK(found->info == 42, "Find: correct value found");
 
@@ -47,11 +49,11 @@ void test_find() {
 
 void test_delete() {
     Node* list = NULL;
-
+    RelType release = 0;
     for (int i = 0; i < 3; ++i) {
-        list = node_insert(list, i + 1);
+        list = node_insert(list, i + 1, &release);
     }
-
+    fprintf(stdout, "Last release == %d\n", release);
     CHECK(node_delete(&list, 2) == 0, "Delete: removed release 2");
     CHECK(node_find(list, 2) == NULL, "Delete: release 2 no longer found");
 
@@ -64,7 +66,7 @@ void test_destroy() {
     Node* list = NULL;
 
     for (int i = 0; i < 10; ++i) {
-        list = node_insert(list, i);
+        list = node_insert(list, i, NULL);
     }
 
     node_destroy(list);

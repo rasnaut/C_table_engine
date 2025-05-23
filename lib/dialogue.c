@@ -65,15 +65,15 @@ int search_key(Table* table)
     char* search_key = readline("Enter key: ");
     if (!search_key) return -1;
 
-    Node* node = core_search(search_key, table);
-    if (!node) {
+    KeySpace* key = core_search(search_key, table);
+    if (!key) {
         printf("❌ Key not found\n");
         free(search_key);
         return 1;
     }
 
     printf("🔎 Versions for key \"%s\":\n", search_key);
-    print_list(node);
+    print_list(key->node);
 
     free(search_key);
     return 0;

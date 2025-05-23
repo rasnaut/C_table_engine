@@ -29,47 +29,38 @@ Table* core_init_table(Table* table, size_t initial_size) {
 }
 
 int core_insert(const char* insert_key, unsigned int insert_info, Table* table) {
-    if (!table || !insert_key) return -1;
-    if (table->size == table->max_size) return 1;  // переполнение
+    if (!table || !insert_key) return 0;
+    if (table->size == table->max_size) return 0;  // переполнение
 
     unsigned long hash = djb2_hash(insert_key);
     size_t index = hash % table->max_size;
 
     KeySpace* slot = &table->ks[index];
 
+    return add_node(slot, insert_key, insert_info, table);
     
-    int retVal = add_node(slot, insert_key, insert_info, table);
-    if (retVal != 0)
-        return retVal;
-
     // Коллизия — разные ключи по одному индексу
-    fprintf(stderr, "core_insert error: collision at index %zu (keys '%s' vs '%s')\n",
-            index, slot->key, insert_key);
-    return -1;
+    // fprintf(stderr, "core_insert error: collision at index %zu (keys '%s' vs '%s')\n",
+    //         index, slot->key, insert_key);
 }
 
-int add_node(KeySpace *slot, const char *insert_key, unsigned int insert_info, Table *table)
+RelType add_node(KeySpace *slot, const char *insert_key, unsigned int insert_info, Table *table)
 {
-    if (!slot->busy)
-    {
+    if (!slot->busy) {
         // Пустая ячейка — вставляем
         slot->busy = 1;
         slot->key = strdup(insert_key);
-        slot->node = node_insert(NULL, insert_info);
-        slot->list_length++;
         table->size++;
+    } else if (strcmp(slot->key, insert_key) != 0) { // Уже есть данные — проверим ключ
         return 0;
     }
 
-    // Уже есть данные — проверим ключ
-    if (strcmp(slot->key, insert_key) == 0)
-    {
+    RelType release = 0;
+    slot->node = node_insert(slot->node, insert_info, &release);
+    if(release > 0)
         slot->list_length++;
-        slot->node = node_insert(slot->node, insert_info);
-        return 0;
-    }
-    
-    return 1;
+
+    return release;
 }
 
 //Ð£Ð´Ð°Ð»ÐµÐ½Ð¸Ðµ
@@ -131,7 +122,7 @@ int core_delete_by_key_and_release(const char* key, RelType release, Table* tabl
     KeySpace* slot = &table->ks[index];
     if (slot->busy && strcmp(slot->key, key) == 0) {
         int status = node_delete(&slot->node, release);
-
+        slot->list_length--;
         if (slot->node == NULL) {
             // Если это была последняя версия — удаляем и KeySpace
             free(slot->key);

@@ -25,8 +25,8 @@ void test_init_and_insert() {
     Table* table = malloc(sizeof(Table));
     assert(table != NULL);
     assert(core_init_table(table, 10) != NULL);
-    
-    assert(core_insert("alpha", 42, table) == 0);
+    RelType release = core_insert("alpha", 42, table);
+    assert(release > 0);
     assert(table->size == 1);
     printf("Insert one element ... Done!\n");
 
@@ -39,15 +39,18 @@ void test_init_and_insert() {
     assert(element->node->info == 42);
     printf("Founding 1 element data ... Done!\n");
 
-
-    assert(core_insert("alpha", 99, table) == 0); // добавляется как новая версия
+    printf("Release 1: %d\n", release);
+    release = core_insert("alpha", 99, table);
+    printf("Release 2: %d\n", release);
+    assert(release > 0); // добавляется как новая версия
     assert(element->list_length == 2);
-    Node* found = node_find(element->node, 99);
+    Node* found = node_find(element->node, release);
     assert(found != NULL);
+    printf("Found info: %d\n", found->info);
     assert(found->info == 99);
     printf("Insert 2 element ... Done!\n");
 
-    assert(core_insert("beta", 84, table) == 0);
+    assert(core_insert("beta", 84, table) != -1);
     printf("Insert 3 element ... Done!\n");
 
     element = core_search("beta", table);
@@ -69,25 +72,26 @@ void test_search_and_delete() {
     Table* table = malloc(sizeof(Table));
     assert(core_init_table(table, 5) != NULL);
 
-    core_insert("x", 11, table);
-    core_insert("x", 22, table);
-    core_insert("x", 33, table);
+    RelType release1 = core_insert("x", 11, table);
+    RelType release2 = core_insert("x", 22, table);
+    RelType release3 = core_insert("x", 33, table);
 
     KeySpace* element = core_search("x", table);
     assert(element->busy == 1);
     assert(element->list_length == 3);
     
 
-    // Удаляем версию 1
-    assert(core_delete_by_key_and_release("x", 1, table) == 0);
+    // Удаляем версию 2
+    assert(core_delete_by_key_and_release("x", release2, table) == 0);
 
-    Node* updated = core_search("x", table);
+    KeySpace* updated = core_search("x", table);
     assert(updated != NULL);
-    assert(updated->release != 1); // нет удалённой версии
+    assert(updated->list_length == 2); // нет удалённой версии
+    assert(node_find(updated->node, release2) == NULL);
 
     // Удалим все оставшиеся
-    core_delete_by_key_and_release("x", 0, table);
-    core_delete_by_key_and_release("x", 2, table);
+    core_delete_by_key_and_release("x", release1, table);
+    core_delete_by_key_and_release("x", release3, table);
     assert(core_search("x", table) == NULL);
 
     printf("✅ Test search and delete passed!\n\n");
@@ -100,8 +104,8 @@ void test_search_not_found() {
     Table* table = malloc(sizeof(Table));
     assert(core_init_table(table, 5) != NULL);
 
-    assert(core_insert("one", 1, table) == 0);
-    assert(core_insert("two", 2, table) == 0);
+    assert(core_insert("one", 1, table) == 1);
+    assert(core_insert("two", 2, table) == 1);
 
     assert(core_search("three", table) == NULL);
     assert(core_delete_by_key_and_release("two", 9, table) == -1); // версии 9 нет
@@ -114,9 +118,9 @@ int main() {
     setbuf(stdout, NULL);  // отключает буфер stdout
 
     test_init_and_delete();
-    //test_init_and_insert();
-    //test_search_and_delete();
-    //test_search_not_found();
+    test_init_and_insert();
+    test_search_and_delete();
+    test_search_not_found();
 
     printf("🎉 ✅ ALL TESTS PASSED!\n");
     return 0;

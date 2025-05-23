@@ -11,7 +11,7 @@ typedef struct Table {
 Table* core_init_table(Table* table, const size_t initial_size);
 int core_insert(const char *insert_key, const unsigned int insert_info, Table *table);
 
-int add_node(KeySpace *slot, const char *insert_key, unsigned int insert_info, Table *table);
+RelType add_node(KeySpace *slot, const char *insert_key, unsigned int insert_info, Table *table);
 
 int core_delete(const char* delete_key,Table* table);
 void core_print_table(Table* table);

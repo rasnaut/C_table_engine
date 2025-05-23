@@ -11,21 +11,29 @@ Node* node_create(InfoType info, RelType release) {
     return node;
 }
 
-Node* node_insert(Node* head, InfoType info) {
-    RelType next_release = 1;
+Node* node_insert(Node* head, InfoType info, RelType* release) {
+    RelType next_release = 0;
+    if(head)
+        next_release = head->release;
+        
     Node* curr = head;
     while (curr && curr->next) {
         curr = curr->next;
         next_release++;
     }
-
+    next_release++;
+    
     Node* new_node = node_create(info, next_release);
     if (!new_node) return NULL;
 
-    if (!head)
-        return new_node;
+    if (!head) head = new_node;
+    else {
+        curr->next = new_node;
+    }
 
-    curr->next = new_node;
+    if(release)
+        *release = new_node->release;
+
     return head;
 }
 
