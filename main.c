@@ -14,11 +14,12 @@ int main()
     }
     while(1) {
         printf("1 - Inserting an element into a table\n");
-        printf("2 - Searching for an element in a table\n");
-        printf("3 - Removing an element from a table\n");
+        printf("2 - Searching for an elements in a table\n");
+        printf("3 - Removing an element by key and release from a table\n");
         printf("4 - Outputting a table to the console\n");
         printf("5 - Importing a table from a file\n");
-        printf("6 - Exit\n");
+        printf("6 - Searching for an element by key and release in a table\n");
+        printf("7 - Exit\n");
 
         char* input_str = readline("Enter comand number: ");
         int input = atoi(input_str);
@@ -42,6 +43,9 @@ int main()
             if(file_import(table,&eof_tmp)==NULL && eof_tmp == -1) return -1;
             break;
         case 6:
+            special_search(table);
+            return 0;
+        case 7:
             free_table(table);
             return 0;
         default:

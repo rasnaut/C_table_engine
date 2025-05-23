@@ -11,4 +11,7 @@ void print_table(Table* table);
 
 Table* file_import(Table* table,int* eof_tmp);
 
+int special_search(Table* table);
+
+
 #endif

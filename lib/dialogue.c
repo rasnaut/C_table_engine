@@ -45,16 +45,13 @@ int insert(Table* table)
     int res = core_insert(insert_key, insert_info, table);
     free(insert_key);
 
-    if (res == -1) {
-        printf("Error: Duplicate hash index with different key (collision)\n");
+    if (!res) {
+        printf("Error: inser error\n");
         return 1;
     }
-    if (res == 1) {
-        printf("Error: Table overflow\n");
-        return 1;
-    }
+    
 
-    printf("✅ Insert successful\n");
+    printf("✅ Insert successful insert by release: %d\n", res);
     return 0;
 }
 
@@ -142,15 +139,32 @@ Table* file_import(Table* table, int* eof_tmp)
     return res;
 }
 
-int special_search(Table* table, int* eof_tmp)
+int special_search(Table* table)
 {
-    char* start_key = readline("Enter the initial key: ");
-    if (!start_key) 
+    char* search_key = readline("Enter the search key: ");
+    if (!search_key) 
     {
-        *eof_tmp = -1;
         return 1;
     }
 
-    printf("✅ Table successfully imported\n");
+    KeySpace* key = core_search(search_key, table);
+    if (!key) {
+        printf("❌ Key not found\n");
+        free(search_key);
+        return 1;
+    }
+
+    char* input = readline("Enter release number: ");
+    if (!input) return -1;
+
+    RelType release = atoi(input);
+    free(input);
+
+    Node* find = node_find(key->node, release);
+    if (!find) {
+        printf("❌ Release %d not exist for key: %s\n", release, key->key);
+    }
+
+    printf("✅ Release %d found for key: %s\n", release, key->key);
     return 0;
 }
