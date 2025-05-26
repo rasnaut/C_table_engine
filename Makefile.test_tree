@@ -1,0 +1,22 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c11
+LDLIBS = -lm
+
+SRC = test_binary_tree.c
+LIB_SRC = lib_binary_tree.cpp
+OBJ = $(LIB_SRC:.cpp=.o)
+TARGET = test_binary_tree
+
+all: $(TARGET)
+
+$(TARGET): $(SRC) $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+%.o: %.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+run: $(TARGET)
+	./$(TARGET)
+
+clean:
+	rm -f $(TARGET) *.o
