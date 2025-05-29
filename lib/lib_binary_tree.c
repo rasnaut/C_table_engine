@@ -1,9 +1,11 @@
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "lib_binary_tree.h"
-
-
 
 BinaryTreeNode *binary_tree_node_create(const char *key, const char *data)
 {
@@ -25,6 +27,8 @@ BinaryTreeNode *binary_tree_node_create(const char *key, const char *data)
         free(node);
         return NULL;
     }
+    node->left=NULL;
+    node->right=NULL;
     return node;
 }
 
@@ -37,34 +41,37 @@ int binary_tree_node_create_child_recursive(BinaryTreeNode *parent, const char *
 
     BinaryTreeNode **new_child = NULL;
     (*height)++;
-    if (strcmp(key, parent->key) < 0) {
-        if (parent->left) {
-            return binary_tree_node_create_child_recursive(parent->left, key, data, height);
+    if(parent->key != NULL) {
+        if (strcmp(key, parent->key) < 0) {
+            if (parent->left) {
+                return binary_tree_node_create_child_recursive(parent->left, key, data, height);
+            } else {
+                new_child = &(parent->left);
+            }
+        } else if (strcmp(key, parent->key) > 0) {
+            if (parent->right) {
+                return binary_tree_node_create_child_recursive(parent->right, key, data, height);
+            } else {
+                new_child = &(parent->right);
+            }
         } else {
-            new_child = &(parent->left);
+            // Key already exists, do not insert duplicates
+            char* new_data = (char*)realloc(parent->data, strlen(data)+1);
+            if (new_data) {
+                parent->data = new_data;
+                strcpy(parent->data, data);
+            } else {
+                fprintf(stderr, "Error: Memory allocation failed for data in existing BinaryTreeNode\n");
+            }
+            return 0;
         }
-    } else if (strcmp(key, parent->key) > 0) {
-        if (parent->right) {
-            return binary_tree_node_create_child_recursive(parent->right, key, data, height);
-        } else {
-            new_child = &(parent->right);
-        }
-    } else {
-        // Key already exists, do not insert duplicates
-        char* new_data = (char*)realloc(parent->data, strlen(data)+1);
-        if (new_data) {
-            parent->data = new_data;
-            strcpy(parent->data, data);
-        } else {
-            fprintf(stderr, "Error: Memory allocation failed for data in existing BinaryTreeNode\n");
-        }
-        return 0;
     }
+    
 
     *new_child = binary_tree_node_create(key, data);
     if (!*new_child) {
         fprintf(stderr, "Error: Memory allocation failed for new BinaryTreeNode\n");
-        return;
+        return 0;
     }
     return 1; // Node created successfully
 }
@@ -114,6 +121,13 @@ void binary_tree_node_recursive_print_sort_view(const BinaryTreeNode *node)
     }
 }
 
+size_t binary_tree_node_calculate_height_recursiv(const BinaryTreeNode *node) {
+    if (!node) return 0;
+    size_t left_height = binary_tree_node_calculate_height_recursiv(node->left);
+    size_t right_height = binary_tree_node_calculate_height_recursiv(node->right);
+    return 1 + (left_height > right_height ? left_height : right_height);
+}
+
 BinaryTree *binary_tree_create()
 {
     BinaryTree *tree = (BinaryTree *)malloc(sizeof(BinaryTree));
@@ -139,8 +153,9 @@ int binary_tree_insert(BinaryTree *tree, const char *key, const char *data)
         if (!tree->root) {
             return -1; // Memory allocation failed
         }
+        tree->size += 1;
     } else {
-        size_t height = 0;
+        size_t height = 1;
         tree->size += binary_tree_node_create_child_recursive(tree->root, key, data, &height);
         if (height > tree->height) {
             tree->height = height; // Update height if new node is deeper
@@ -166,8 +181,10 @@ BinaryTreeNode *binary_tree_search(const BinaryTree *tree, const char *key)
         return NULL;
     }
     BinaryTreeNode *current = tree->root;
+    printf("binary_tree_search 1\n");
     while (current) {
         int cmp = strcmp(key, current->key);
+        printf("cmp == %d\n", cmp);
         if (cmp < 0) {
             current = current->left;
         } else if (cmp > 0) {
@@ -205,6 +222,59 @@ int binary_tree_get_all_nodes_contained_substring(
     return 1;
 }
 
+void binary_tree_erase_node_by_key(BinaryTree *tree, const char *key)
+{
+    if (!tree || !key) return;
+    tree->root = binary_tree_node_erase_child_by_key(tree->root, key);
+    tree->size--;
+    tree->height = binary_tree_calculate_height(tree);
+}
+
+BinaryTreeNode* binary_tree_node_erase_child_by_key(BinaryTreeNode *root, const char *key)
+{
+    if (!root) return NULL;
+
+    int cmp = strcmp(key, root->key);
+    if (cmp < 0) {
+        root->left = binary_tree_node_erase_child_by_key(root->left, key);
+    } else if (cmp > 0) {
+        root->right = binary_tree_node_erase_child_by_key(root->right, key);
+    } else {
+        // Найден узел для удаления
+        if (!root->left && !root->right) {
+            binary_tree_node_destroy(root);
+            return NULL;
+        }
+        else if (!root->left) {
+            BinaryTreeNode* temp = root->right;
+            binary_tree_node_destroy(root);
+            return temp;
+        }
+        else if (!root->right) {
+            BinaryTreeNode* temp = root->left;
+            binary_tree_node_destroy(root);
+            return temp;
+        }
+        else {
+            // Найдём минимум справа
+            BinaryTreeNode* min_node = root->right;
+            while (min_node->left) {
+                min_node = min_node->left;
+            }
+            // Копируем значения
+            free(root->key);
+            free(root->data);
+            root->key = strdup(min_node->key);
+            root->data = strdup(min_node->data);
+
+            // Удалим дубликат
+            root->right = binary_tree_node_erase_child_by_key(root->right, min_node->key);
+        }
+    }
+
+    return root;
+}
+
 void binary_tree_print(const BinaryTree *tree)
 {
     if (!tree) {
@@ -214,3 +284,19 @@ void binary_tree_print(const BinaryTree *tree)
     printf("Binary Tree (size=%zu, height=%zu):\n", tree->size, tree->height);
     binary_tree_node_recursive_print_tree_view(tree->root, 0);
 }
+
+void binary_tree_print_sort_view(const BinaryTree *tree)
+{
+    if(tree && tree->root)
+        binary_tree_node_recursive_print_sort_view(tree->root);
+}
+
+size_t binary_tree_calculate_height(const BinaryTree *node)
+{
+    if(!node && node->root)
+        return 0;
+
+    return binary_tree_node_calculate_height_recursiv(node->root);
+}
+
+

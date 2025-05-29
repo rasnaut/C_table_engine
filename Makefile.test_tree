@@ -1,22 +1,35 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11
-LDLIBS = -lm
+CFLAGS = -Wall -Wextra -std=c11 -I./lib
+LDFLAGS = 
+LDLIBS = -lreadline -lncurses -lm
 
 SRC = test_binary_tree.c
-LIB_SRC = lib_binary_tree.cpp
-OBJ = $(LIB_SRC:.cpp=.o)
+LIB_SRC = lib/lib_binary_tree.c
+LIB_OBJS = $(LIB_SRC:.c=.o)
+LIB_STATIC = test_binary_tree.a
+
 TARGET = test_binary_tree
 
 all: $(TARGET)
 
-$(TARGET): $(SRC) $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+$(TARGET): $(SRC) $(LIB_STATIC)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) $(LIB_STATIC) -o $@ $(LDLIBS)
 
-%.o: %.cpp
+$(LIB_STATIC): $(LIB_OBJS)
+	ar rcs $@ $^
+
+lib/%.o: lib/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -f $(TARGET) *.o
+	rm -f lib/*.o $(TARGET) $(LIB_STATIC)
+
+build_debug:
+	$(MAKE) clean
+	$(MAKE) CFLAGS="-Wall -Wextra -std=c11 -g -O0 -I./lib"
+
+valgrind: build_debug
+	valgrind --leak-check=full --error-exitcode=1 ./$(TARGET)

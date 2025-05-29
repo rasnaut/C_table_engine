@@ -4,3 +4,4 @@
 *.o
 program
 test_library
+test_binary_tree
