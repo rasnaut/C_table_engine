@@ -7,127 +7,6 @@
 #include <string.h>
 #include "lib_binary_tree.h"
 
-BinaryTreeNode *binary_tree_node_create(const char *key, const char *data)
-{
-    BinaryTreeNode *node = (BinaryTreeNode *)malloc(sizeof(BinaryTreeNode));
-    if (!node) {
-        fprintf(stderr, "Error: Memory allocation failed for BinaryTreeNode\n");
-        return NULL;
-    }
-    node->key = strdup(key);
-    if (!node->key) {
-        fprintf(stderr, "Error: Memory allocation failed for key in BinaryTreeNode\n");
-        free(node);
-        return NULL;
-    }
-    node->data = strdup(data);
-    if (!node->data) {
-        fprintf(stderr, "Error: Memory allocation failed for data in BinaryTreeNode\n");
-        free(node->key);
-        free(node);
-        return NULL;
-    }
-    node->left=NULL;
-    node->right=NULL;
-    return node;
-}
-
-int binary_tree_node_create_child_recursive(BinaryTreeNode *parent, const char *key, const char *data, size_t *height)
-{
-    if (!parent || !key || !data) {
-        fprintf(stderr, "Error: Invalid parameters for binary_tree_node_create_child_recursive\n");
-        return 0;
-    }
-
-    BinaryTreeNode **new_child = NULL;
-    (*height)++;
-    if(parent->key != NULL) {
-        if (strcmp(key, parent->key) < 0) {
-            if (parent->left) {
-                return binary_tree_node_create_child_recursive(parent->left, key, data, height);
-            } else {
-                new_child = &(parent->left);
-            }
-        } else if (strcmp(key, parent->key) > 0) {
-            if (parent->right) {
-                return binary_tree_node_create_child_recursive(parent->right, key, data, height);
-            } else {
-                new_child = &(parent->right);
-            }
-        } else {
-            // Key already exists, do not insert duplicates
-            char* new_data = (char*)realloc(parent->data, strlen(data)+1);
-            if (new_data) {
-                parent->data = new_data;
-                strcpy(parent->data, data);
-            } else {
-                fprintf(stderr, "Error: Memory allocation failed for data in existing BinaryTreeNode\n");
-            }
-            return 0;
-        }
-    }
-    
-
-    *new_child = binary_tree_node_create(key, data);
-    if (!*new_child) {
-        fprintf(stderr, "Error: Memory allocation failed for new BinaryTreeNode\n");
-        return 0;
-    }
-    return 1; // Node created successfully
-}
-
-void binary_tree_node_destroy(BinaryTreeNode *node)
-{
-    if (node) {
-        free(node->key);
-        free(node->data);
-        free(node);
-    }
-}
-
-void binary_tree_node_recursive_destroy(BinaryTreeNode *node)
-{
-    if (node) {
-        binary_tree_node_recursive_destroy(node->left);
-        binary_tree_node_recursive_destroy(node->right);
-        binary_tree_node_destroy(node);
-    }
-}
-
-void binary_tree_node_print(const BinaryTreeNode *node, int level) {
-    if (node) {
-        for (int i = 0; i < level; i++) {
-            printf("  ");
-        }
-        printf("Node: key='%s', data='%s'\n", node->key, node->data);
-    }
-}
-
-void binary_tree_node_recursive_print_tree_view(const BinaryTreeNode *node, int level)
-{
-    if (node) {
-        binary_tree_node_print(node, level);
-        binary_tree_node_recursive_print_tree_view(node->left, level + 1);
-        binary_tree_node_recursive_print_tree_view(node->right, level + 1);
-    }
-}
-
-void binary_tree_node_recursive_print_sort_view(const BinaryTreeNode *node)
-{
-    if (node) {
-        binary_tree_node_recursive_print_sort_view(node->left);
-        binary_tree_node_print(node, 0);
-        binary_tree_node_recursive_print_sort_view(node->right);
-    }
-}
-
-size_t binary_tree_node_calculate_height_recursiv(const BinaryTreeNode *node) {
-    if (!node) return 0;
-    size_t left_height = binary_tree_node_calculate_height_recursiv(node->left);
-    size_t right_height = binary_tree_node_calculate_height_recursiv(node->right);
-    return 1 + (left_height > right_height ? left_height : right_height);
-}
-
 BinaryTree *binary_tree_create()
 {
     BinaryTree *tree = (BinaryTree *)malloc(sizeof(BinaryTree));
@@ -180,20 +59,7 @@ BinaryTreeNode *binary_tree_search(const BinaryTree *tree, const char *key)
         fprintf(stderr, "Error: Invalid parameters for binary_tree_search\n");
         return NULL;
     }
-    BinaryTreeNode *current = tree->root;
-    printf("binary_tree_search 1\n");
-    while (current) {
-        int cmp = strcmp(key, current->key);
-        printf("cmp == %d\n", cmp);
-        if (cmp < 0) {
-            current = current->left;
-        } else if (cmp > 0) {
-            current = current->right;
-        } else {
-            break; // Key found
-        }
-    }
-    return current;
+    return binary_tree_node_search_node_by_key(tree->root, key);
 }
 
 int binary_tree_get_all_nodes_contained_substring(
@@ -222,57 +88,63 @@ int binary_tree_get_all_nodes_contained_substring(
     return 1;
 }
 
+
+KeyArray* binary_tree_get_all_nodes_max_diff_symbols(
+    const BinaryTreeNode* root, const char* target_key)
+{
+    if (!root || !target_key) {
+        fprintf(stderr, "Error: Invalid parameters\n");
+        return 0;
+    }
+
+    const BinaryTreeNode* node = root;
+    const BinaryTreeNode* last_visited = NULL;
+    KeyArray* result_array = key_array_create();
+    if (!result_array) {
+        fprintf(stderr, "Error: Memory allocation failed for result_array\n");
+        return NULL;
+    }
+
+    while (node) {
+        if (node->left && node->left != last_visited) {
+            node = node->left;
+        }
+        else if (node->right && node->right != last_visited) {
+            // Проверяем ключ
+            int has_common = 0;
+            for (const char* p = node->key; *p && !has_common; ++p) {
+                if (strchr(target_key, *p))
+                    has_common = 1;
+            }
+            if (!has_common)
+                key_array_push_back(result_array, node->key);
+            
+            node = node->right;
+        }
+        else {
+            // Проверяем ключ (если ещё не проверяли — например, левый самый нижний)
+            if (!last_visited || (last_visited != node->right)) {
+                int has_common = 0;
+                for (const char* p = node->key; *p && !has_common; ++p) {
+                    if (strchr(target_key, *p))
+                        has_common = 1;
+                }
+                if (!has_common) 
+                    key_array_push_back(result_array, node->key);
+            }
+            last_visited = node;
+            node = node->parent;
+        }
+    }
+    return result_array;
+}
+
 void binary_tree_erase_node_by_key(BinaryTree *tree, const char *key)
 {
     if (!tree || !key) return;
     tree->root = binary_tree_node_erase_child_by_key(tree->root, key);
     tree->size--;
     tree->height = binary_tree_calculate_height(tree);
-}
-
-BinaryTreeNode* binary_tree_node_erase_child_by_key(BinaryTreeNode *root, const char *key)
-{
-    if (!root) return NULL;
-
-    int cmp = strcmp(key, root->key);
-    if (cmp < 0) {
-        root->left = binary_tree_node_erase_child_by_key(root->left, key);
-    } else if (cmp > 0) {
-        root->right = binary_tree_node_erase_child_by_key(root->right, key);
-    } else {
-        // Найден узел для удаления
-        if (!root->left && !root->right) {
-            binary_tree_node_destroy(root);
-            return NULL;
-        }
-        else if (!root->left) {
-            BinaryTreeNode* temp = root->right;
-            binary_tree_node_destroy(root);
-            return temp;
-        }
-        else if (!root->right) {
-            BinaryTreeNode* temp = root->left;
-            binary_tree_node_destroy(root);
-            return temp;
-        }
-        else {
-            // Найдём минимум справа
-            BinaryTreeNode* min_node = root->right;
-            while (min_node->left) {
-                min_node = min_node->left;
-            }
-            // Копируем значения
-            free(root->key);
-            free(root->data);
-            root->key = strdup(min_node->key);
-            root->data = strdup(min_node->data);
-
-            // Удалим дубликат
-            root->right = binary_tree_node_erase_child_by_key(root->right, min_node->key);
-        }
-    }
-
-    return root;
 }
 
 void binary_tree_print(const BinaryTree *tree)
