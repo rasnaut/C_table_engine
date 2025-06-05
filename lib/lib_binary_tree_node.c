@@ -278,6 +278,23 @@ BinaryTreeNode *binary_tree_node_search_node_by_key(const BinaryTreeNode *start_
     return current;
 }
 
+BinaryTreeNode *binary_tree_node_search_node_by_with_substring(const BinaryTreeNode *tree, const char *substring)
+{
+    BinaryTreeNode *current = tree;
+    while (current)
+    {
+        char* cmp = strstr(substring, current->key);
+        if(cmp == NULL) {
+            current = current->left; // Move to left subtree
+        } else if (cmp > 0) {
+            current = current->right; // Move to right subtree
+             if (cmp < 0) { current = current->left; }
+        else if (cmp > 0) { current = current->right;}
+        else
+            break; // Key found
+    }
+    return NULL;
+}
 
 BinaryTreeNode* binary_tree_node_erase_child_by_key(BinaryTreeNode *root, const char *key)
 {
@@ -324,13 +341,13 @@ BinaryTreeNode* binary_tree_node_erase_child_by_key(BinaryTreeNode *root, const 
     return root;
 }
 
-BinaryTreeNode* binary_tree_node_erase_child_by_key_iterative(BinaryTreeNode* root, const char* key) {
+int binary_tree_node_erase_child_by_key_iterative(BinaryTreeNode** root, const char* key) {
     
-    BinaryTreeNode* current = binary_tree_node_search_node_by_key(root, key);
+    BinaryTreeNode* current = binary_tree_node_search_node_by_key(*root, key);
     
     // Ключ не найден
     if (!current)
-        return root;
+        return 1;
 
     BinaryTreeNode* parent = current->parent;
     
@@ -340,7 +357,8 @@ BinaryTreeNode* binary_tree_node_erase_child_by_key_iterative(BinaryTreeNode* ro
         if (!parent) {
             // Удаляем корень
             binary_tree_node_destroy(current);
-            return child;
+            *root = child; // Новый корень
+            return 0;
         }
 
         if (parent->left == current)
@@ -349,7 +367,7 @@ BinaryTreeNode* binary_tree_node_erase_child_by_key_iterative(BinaryTreeNode* ro
             parent->right = child;
 
         binary_tree_node_destroy(current);
-        return root;
+        return 0;
     }
 
     // Удаление узла с двумя детьми
@@ -376,6 +394,8 @@ BinaryTreeNode* binary_tree_node_erase_child_by_key_iterative(BinaryTreeNode* ro
 
     binary_tree_node_destroy(min_node);
 
-    return root;
+    return 0;
 }
+
+
 

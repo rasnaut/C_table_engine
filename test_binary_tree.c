@@ -92,7 +92,7 @@ void test_erase_leaf_node() {
     binary_tree_insert(tree, "a", "left");
     binary_tree_insert(tree, "c", "right"); // <-- будет листом
 
-    binary_tree_erase_node_by_key(tree, "c");
+    assert(binary_tree_erase_node_by_key(tree, "c") == 0);
 
     assert(binary_tree_search(tree, "c") == NULL);
     assert(binary_tree_search(tree, "a") != NULL);
@@ -107,7 +107,7 @@ void test_erase_node_with_one_child() {
     binary_tree_insert(tree, "a", "root");
     binary_tree_insert(tree, "b", "right child");
 
-    binary_tree_erase_node_by_key(tree, "a");
+    assert(binary_tree_erase_node_by_key(tree, "a") == 0);
 
     assert(binary_tree_search(tree, "a") == NULL);
     assert(binary_tree_search(tree, "b") != NULL);
@@ -127,7 +127,7 @@ void test_erase_node_with_two_children() {
 
     binary_tree_print(tree);
 
-    binary_tree_erase_node_by_key(tree, "t");
+    assert(binary_tree_erase_node_by_key(tree, "t") == 0);
 
     binary_tree_print(tree);
 
@@ -146,7 +146,7 @@ void test_erase_root_node() {
     binary_tree_insert(tree, "a", "left");
     binary_tree_insert(tree, "z", "right");
 
-    binary_tree_erase_node_by_key(tree, "x");
+    assert(binary_tree_erase_node_by_key(tree, "x") == 0);
 
     assert(binary_tree_search(tree, "x") == NULL);
     assert(binary_tree_search(tree, "a") != NULL);

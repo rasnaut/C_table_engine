@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "lib_binary_tree.h"
+#include "work_library.h"
 
 BinaryTree *binary_tree_create()
 {
@@ -35,7 +36,7 @@ int binary_tree_insert(BinaryTree *tree, const char *key, const char *data)
         tree->size += 1;
     } else {
         size_t height = 1;
-        tree->size += binary_tree_node_create_child_recursive(tree->root, key, data, &height);
+        tree->size += binary_tree_node_create_child_iterative(tree->root, key, data, &height);
         if (height > tree->height) {
             tree->height = height; // Update height if new node is deeper
         }
@@ -50,6 +51,7 @@ void binary_tree_destroy(BinaryTree *tree)
             binary_tree_node_recursive_destroy(tree->root);
         }
         free(tree);
+        tree = NULL; // Set to NULL to avoid dangling pointer
     }
 }
 
@@ -63,15 +65,16 @@ BinaryTreeNode *binary_tree_search(const BinaryTree *tree, const char *key)
 }
 
 int binary_tree_get_all_nodes_contained_substring(
-    const BinaryTreeNode* root, const char* substring, BinaryTree* result_tree)
+    const BinaryTree* tree, const char* substring, BinaryTree* result_tree)
 {
-    if (!root || !substring) {
+    if (!tree || !substring) {
         fprintf(stderr, "Error: Invalid parameters for binary_tree_get_all_nodes_contained_substring\n");
         return 0;
     }
-    if(!root) {
+    if(!tree->root) {
         return 0; // Return empty tree if the original tree is empty
     }
+    BinaryTreeNode* root = tree->root;
     if(result_tree == NULL) {
         result_tree = binary_tree_create();
         if (!result_tree) {
@@ -90,14 +93,14 @@ int binary_tree_get_all_nodes_contained_substring(
 
 
 KeyArray* binary_tree_get_all_nodes_max_diff_symbols(
-    const BinaryTreeNode* root, const char* target_key)
+    const BinaryTree* tree, const char* target_key)
 {
-    if (!root || !target_key) {
+    if (!tree || !tree->root || !target_key) {
         fprintf(stderr, "Error: Invalid parameters\n");
         return 0;
     }
 
-    const BinaryTreeNode* node = root;
+    const BinaryTreeNode* node = tree->root;
     const BinaryTreeNode* last_visited = NULL;
     KeyArray* result_array = key_array_create();
     if (!result_array) {
@@ -139,12 +142,17 @@ KeyArray* binary_tree_get_all_nodes_max_diff_symbols(
     return result_array;
 }
 
-void binary_tree_erase_node_by_key(BinaryTree *tree, const char *key)
+int binary_tree_erase_node_by_key(BinaryTree *tree, const char *key)
 {
-    if (!tree || !key) return;
-    tree->root = binary_tree_node_erase_child_by_key(tree->root, key);
+    if (!tree || !key) return 1;
+    int result = binary_tree_node_erase_child_by_key_iterative(&(tree->root), key);
+    if (result == 1) {
+        fprintf(stderr, "Error: Key '%s' not found in the binary tree\n", key);
+        return 1;
+    }
     tree->size--;
     tree->height = binary_tree_calculate_height(tree);
+    return 0; // Node successfully erased
 }
 
 void binary_tree_print(const BinaryTree *tree)
@@ -171,4 +179,51 @@ size_t binary_tree_calculate_height(const BinaryTree *node)
     return binary_tree_node_calculate_height_recursiv(node->root);
 }
 
+BinaryTree* binary_tree_create_from_file(const char* filename) {
+    if (!filename) {
+        fprintf(stderr, "Error: No filename provided\n");
+        return NULL;
+    }
 
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        fprintf(stderr, "Error: Could not open file %s\n", filename);
+        return NULL;
+    }
+
+    BinaryTree* tree = binary_tree_create();
+    if (!tree) {
+        fclose(file);
+        fprintf(stderr, "Error: Could not create BinaryTree\n");
+        return NULL;
+    }
+
+    char* key = NULL;
+    char* data = NULL;
+
+    while ((key = getstr(file)) != NULL) {
+        data = getstr(file);
+        if (!data) {
+            fprintf(stderr, "Error: Missing data for key '%s'\n", key);
+            free(key);
+            binary_tree_destroy(tree);
+            fclose(file);
+            return NULL;
+        }
+
+        if (binary_tree_insert(tree, key, data) != 1) {
+            fprintf(stderr, "Error: Failed to insert key '%s'\n", key);
+            free(key);
+            free(data);
+            binary_tree_destroy(tree);
+            fclose(file);
+            return NULL;
+        }
+
+        free(key);
+        free(data);
+    }
+
+    fclose(file);
+    return tree;
+}

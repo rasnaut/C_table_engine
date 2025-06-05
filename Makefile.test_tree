@@ -4,7 +4,7 @@ LDFLAGS =
 LDLIBS = -lreadline -lncurses -lm
 
 SRC = test_binary_tree.c
-LIB_SRC = lib/lib_binary_tree.c
+LIB_SRC = lib/lib_binary_tree.c lib/lib_binary_tree_node.c lib/lib_key_array.c
 LIB_OBJS = $(LIB_SRC:.c=.o)
 LIB_STATIC = test_binary_tree.a
 
