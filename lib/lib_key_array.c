@@ -17,25 +17,29 @@ KeyArray* key_array_create(){
 KeyArray* key_array_create_with_capacity(size_t new_capacity) {
     KeyArray* new_arr = (KeyArray*)malloc(sizeof(KeyArray));
     new_arr->array_ptr = NULL;
-    new_arr = key_array_realloc(new_arr, new_capacity);
-    if(new_arr)
-        new_arr->size = 0;
-    
+    if(!key_array_realloc(new_arr, new_capacity))  {
+        fprintf(stderr, "Error: Memory allocation failed for KeyArray\n");
+        free(new_arr);
+        return NULL;
+    }
+    new_arr->size = 0;
+    printf("[ALLOC] KeyArray created at %p with capacity %zu\n", (void*)new_arr, new_capacity);
+
     return new_arr;
 }
 
-KeyArray* key_array_realloc(KeyArray* arr, size_t new_capacity) {
-    if (!arr) return NULL;
+int key_array_realloc(KeyArray* arr, size_t new_capacity) {
+    if (!arr) return 0;
 
     char** result = (char**)realloc(arr->array_ptr, new_capacity * sizeof(char*));
     if (!result) {
         fprintf(stderr, "Error: Memory allocation failed for result array\n");
-        return NULL;
+        return 0;
     }
 
     arr->array_ptr = result;
     arr->capacity = new_capacity;
-    return arr;
+    return 1;
 }
 
 int key_array_push_back(KeyArray* arr, const char* key) {
@@ -43,9 +47,10 @@ int key_array_push_back(KeyArray* arr, const char* key) {
         return 1;
     
     if(arr->size >= arr->capacity) {
-        arr = key_array_realloc(arr, 2 * arr->capacity);
-        if(!arr)
+        if(!key_array_realloc(arr, 2 * arr->capacity)) {
+            fprintf(stderr, "Error: Memory allocation failed while resizing KeyArray\n");
             return 1;
+        }
     }
     arr->array_ptr[arr->size] = strdup(key);
     arr->size++; 
@@ -53,12 +58,18 @@ int key_array_push_back(KeyArray* arr, const char* key) {
 }
 
 void key_array_delete(KeyArray* arr) {
+    printf("[FREE] KeyArray deleted at %p\n", (void*)arr);
+
     if(arr) {
         for(size_t i = 0; i < arr->size; i++) {
             free(arr->array_ptr[i]);
             arr->array_ptr[i] = NULL;
         }   
+        free(arr->array_ptr);
+        arr->array_ptr = NULL;
     }
+    arr->size = 0;
+    arr->capacity = 0;
     free(arr);
 }
 

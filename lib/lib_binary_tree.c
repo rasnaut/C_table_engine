@@ -44,14 +44,14 @@ int binary_tree_insert(BinaryTree *tree, const char *key, const char *data)
     return 1; // Node inserted successfully
 }
 
-void binary_tree_destroy(BinaryTree *tree)
+void binary_tree_destroy(BinaryTree **tree)
 {
-    if (tree) {
-        if (tree->root) {
-            binary_tree_node_recursive_destroy(tree->root);
+    if (*tree) {
+        if ((*tree)->root) {
+            binary_tree_node_recursive_destroy((*tree)->root);
         }
-        free(tree);
-        tree = NULL; // Set to NULL to avoid dangling pointer
+        free(*tree);
+        *tree = NULL; // Set to NULL to avoid dangling pointer
     }
 }
 
@@ -65,16 +65,13 @@ BinaryTreeNode *binary_tree_search(const BinaryTree *tree, const char *key)
 }
 
 int binary_tree_get_all_nodes_contained_substring(
-    const BinaryTree* tree, const char* substring, BinaryTree* result_tree)
+    const BinaryTreeNode* root, const char* substring, BinaryTree* result_tree)
 {
-    if (!tree || !substring) {
+    if (!root || !substring) {
         fprintf(stderr, "Error: Invalid parameters for binary_tree_get_all_nodes_contained_substring\n");
         return 0;
     }
-    if(!tree->root) {
-        return 0; // Return empty tree if the original tree is empty
-    }
-    BinaryTreeNode* root = tree->root;
+    
     if(result_tree == NULL) {
         result_tree = binary_tree_create();
         if (!result_tree) {
@@ -82,7 +79,7 @@ int binary_tree_get_all_nodes_contained_substring(
             return 0;
         }
     }
-    if(root->key && strstr(root->key, substring)) {
+    if(root->key && strncmp(root->key, substring, strlen(substring)) == 0) {
         binary_tree_insert(result_tree, root->key, root->data);
     }
     if(root->left ) { binary_tree_get_all_nodes_contained_substring(root->left, substring, result_tree); }
@@ -97,46 +94,47 @@ KeyArray* binary_tree_get_all_nodes_max_diff_symbols(
 {
     if (!tree || !tree->root || !target_key) {
         fprintf(stderr, "Error: Invalid parameters\n");
-        return 0;
+        return NULL;
     }
 
-    const BinaryTreeNode* node = tree->root;
-    const BinaryTreeNode* last_visited = NULL;
     KeyArray* result_array = key_array_create();
     if (!result_array) {
         fprintf(stderr, "Error: Memory allocation failed for result_array\n");
         return NULL;
     }
 
+    BinaryTreeNode* node = tree->root;
+    BinaryTreeNode* tmpNodeLeft = NULL;
+    BinaryTreeNode* tmpNodeRight = NULL;
+    char checked = 0;
     while (node) {
-        if (node->left && node->left != last_visited) {
-            node = node->left;
-        }
-        else if (node->right && node->right != last_visited) {
-            // Проверяем ключ
+             if (node->left  && node->left  != tmpNodeLeft ) { node = node->left; }
+        else if (!checked) {
             int has_common = 0;
             for (const char* p = node->key; *p && !has_common; ++p) {
                 if (strchr(target_key, *p))
                     has_common = 1;
             }
-            if (!has_common)
-                key_array_push_back(result_array, node->key);
-            
-            node = node->right;
-        }
-        else {
-            // Проверяем ключ (если ещё не проверяли — например, левый самый нижний)
-            if (!last_visited || (last_visited != node->right)) {
-                int has_common = 0;
-                for (const char* p = node->key; *p && !has_common; ++p) {
-                    if (strchr(target_key, *p))
-                        has_common = 1;
-                }
-                if (!has_common) 
-                    key_array_push_back(result_array, node->key);
+            if (!has_common && key_array_push_back(result_array, node->key))
+            {
+                fprintf(stderr, "Error: Memory allocation failed while pushing back key\n");
+                key_array_delete(result_array);
+                return NULL;
             }
-            last_visited = node;
+            checked = 1; // Mark as checked
+        }
+        else if (node->right && node->right != tmpNodeRight) { node = node->right; }
+        else if(node->parent) {
+            if (node == node->parent->right) {
+                tmpNodeRight = node;
+            } else if (node == node->parent->left) {
+                checked = 0;
+            }
+            
             node = node->parent;
+            tmpNodeLeft = node->left;
+        } else {
+            break;
         }
     }
     return result_array;
@@ -185,11 +183,14 @@ BinaryTree* binary_tree_create_from_file(const char* filename) {
         return NULL;
     }
 
+    printf("Importing binary tree from file: %s\n", filename);
+
     FILE* file = fopen(filename, "r");
     if (!file) {
         fprintf(stderr, "Error: Could not open file %s\n", filename);
         return NULL;
     }
+    printf("File %s opened\n", filename);
 
     BinaryTree* tree = binary_tree_create();
     if (!tree) {
@@ -198,15 +199,23 @@ BinaryTree* binary_tree_create_from_file(const char* filename) {
         return NULL;
     }
 
+     printf("Binary tree created\n");
     char* key = NULL;
     char* data = NULL;
 
     while ((key = getstr(file)) != NULL) {
+        if (!key || strlen(key) == 0) {
+            fprintf(stderr, "Error: Invalid key read from file\n");
+            free(key);
+            binary_tree_destroy(&tree);
+            fclose(file);
+            return NULL;
+        }
         data = getstr(file);
         if (!data) {
             fprintf(stderr, "Error: Missing data for key '%s'\n", key);
             free(key);
-            binary_tree_destroy(tree);
+            binary_tree_destroy(&tree);
             fclose(file);
             return NULL;
         }
@@ -215,10 +224,12 @@ BinaryTree* binary_tree_create_from_file(const char* filename) {
             fprintf(stderr, "Error: Failed to insert key '%s'\n", key);
             free(key);
             free(data);
-            binary_tree_destroy(tree);
+            binary_tree_destroy(&tree);
             fclose(file);
             return NULL;
         }
+
+        printf("Inserted key: '%s' with data: '%s'\n", key, data);
 
         free(key);
         free(data);

@@ -13,11 +13,11 @@ typedef struct BinaryTree {
 BinaryTree* binary_tree_create();
 
 int binary_tree_insert(BinaryTree* tree, const char* key, const char* data);
-void binary_tree_destroy(BinaryTree* tree);
+void binary_tree_destroy(BinaryTree** tree);
 BinaryTreeNode *binary_tree_search(const BinaryTree *tree, const char *key);
 
 int binary_tree_get_all_nodes_contained_substring(
-    const BinaryTree* tree, const char* substring, BinaryTree* result_tree);
+    const BinaryTreeNode* root, const char* substring, BinaryTree* result_tree);
 KeyArray* binary_tree_get_all_nodes_max_diff_symbols(
     const BinaryTree* tree, const char* target_key);
 int binary_tree_erase_node_by_key(BinaryTree* tree, const char* key);

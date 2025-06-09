@@ -6,6 +6,7 @@
 #include "work_library.h"
 #include "lib_binary_tree.h"
 #include "dialogue.h"
+#include "graphviz_print.h"
 
 int init_table(Table* table)
 {
@@ -254,7 +255,7 @@ int clear_binary_tree(BinaryTree* tree) {
         return -1;
     }
 
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
     if (tree) {
         printf("❌ Failed to clear binary tree\n");
         return -1;
@@ -331,8 +332,9 @@ int generate_graphviz_file(const BinaryTree *tree)
         return -1;
     }
     binary_tree_generate_dot(tree, filename);
+    printf("You can view it with command: dot -Tpng -o output.png %s\n", filename);
     free(filename);
     printf("✅ Graphviz file generated successfully\n");
-    printf("You can view it with command: dot -Tpng -o output.png %s\n", filename);
+    
     return 0;
 }

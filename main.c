@@ -38,13 +38,13 @@ int main()
             if(delete_node_in_binary_tree(tree) == -1) return -1;
             break;
         case 4:
-            binary_tree_print_sort_view(tree);
+            print_binary_tree(tree);
             break;
         case 5:
             print_tree_view_binary_tree(tree);
             break;
         case 6:
-            binary_tree_file_import(tree, &eof_tmp);
+            binary_tree_file_import(&eof_tmp);
             if (eof_tmp == -1) {    
                 printf("Error: File not found or invalid data entry\n");
                 return -1;
@@ -60,10 +60,7 @@ int main()
             generate_graphviz_file(tree);
             break;
         case 10:
-            if (tree) {
-                binary_tree_destroy(tree);
-                tree = NULL;
-            }
+            clear_binary_tree(tree);
             printf("Exiting...\n");
             return 0;
         default:
@@ -72,7 +69,7 @@ int main()
         }
     }
     if(tree) 
-        binary_tree_destroy(tree);
+        clear_binary_tree(tree);
     
     return 0;
 }

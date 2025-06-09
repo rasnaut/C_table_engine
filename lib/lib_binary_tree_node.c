@@ -278,22 +278,27 @@ BinaryTreeNode *binary_tree_node_search_node_by_key(const BinaryTreeNode *start_
     return current;
 }
 
-BinaryTreeNode *binary_tree_node_search_node_by_with_substring(const BinaryTreeNode *tree, const char *substring)
+BinaryTreeNode *binary_tree_node_search_node_by_with_substring(const BinaryTreeNode *root, const char *substring)
 {
-    BinaryTreeNode *current = tree;
+    BinaryTreeNode *current = (BinaryTreeNode*)root;
     while (current)
     {
         char* cmp = strstr(substring, current->key);
         if(cmp == NULL) {
             current = current->left; // Move to left subtree
-        } else if (cmp > 0) {
-            current = current->right; // Move to right subtree
-             if (cmp < 0) { current = current->left; }
-        else if (cmp > 0) { current = current->right;}
-        else
-            break; // Key found
+        } else {
+            break;
+        }
+        
+        // else if (cmp > 0) {
+        //     current = current->right; // Move to right subtree
+        //          if (cmp < 0) { current = current->left; }
+        //     else if (cmp > 0) { current = current->right;}
+        //     else
+        //         break; // Key found
+        // }
     }
-    return NULL;
+    return current;
 }
 
 BinaryTreeNode* binary_tree_node_erase_child_by_key(BinaryTreeNode *root, const char *key)
@@ -396,6 +401,3 @@ int binary_tree_node_erase_child_by_key_iterative(BinaryTreeNode** root, const c
 
     return 0;
 }
-
-
-

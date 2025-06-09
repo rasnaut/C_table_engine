@@ -23,7 +23,7 @@ void binary_tree_node_destroy(BinaryTreeNode* node);
 void binary_tree_node_recursive_destroy(BinaryTreeNode* node);
 
 BinaryTreeNode *binary_tree_node_search_node_by_key(const BinaryTreeNode *tree, const char *key);
-BinaryTreeNode *binary_tree_node_search_node_by_with_substring(const BinaryTreeNode *tree, const char *substring);
+BinaryTreeNode *binary_tree_node_search_node_by_with_substring(const BinaryTreeNode *root, const char *substring);
 
 void binary_tree_node_print(const BinaryTreeNode* node, int level);
 void binary_tree_node_recursive_print_tree_view(const BinaryTreeNode* node, int level);
