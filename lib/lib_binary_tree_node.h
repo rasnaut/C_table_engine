@@ -26,6 +26,8 @@ BinaryTreeNode *binary_tree_node_search_node_by_key(const BinaryTreeNode *tree, 
 BinaryTreeNode *binary_tree_node_search_node_by_with_substring(const BinaryTreeNode *root, const char *substring);
 
 void binary_tree_node_print(const BinaryTreeNode* node, int level);
+void binary_tree_node_iterative_print_sort_view(const BinaryTreeNode *root);
+void binary_tree_node_iterative_print_tree_view(const BinaryTreeNode* root);
 void binary_tree_node_recursive_print_tree_view(const BinaryTreeNode* node, int level);
 void binary_tree_node_recursive_print_sort_view(const BinaryTreeNode* node);
 

@@ -5,7 +5,7 @@ LDLIBS = -lreadline -lmylib
 
 SRC_DIR = lib
 MAIN_SRC = main.c
-LIB_SRC = lib/library.c lib/work_library.c lib/dialogue.c lib/list.c lib/graphviz_print.c lib/lib_binary_tree.c lib/lib_binary_tree_node.c lib/lib_key_array.c
+LIB_SRC = lib/work_library.c lib/dialogue.c lib/list.c lib/graphviz_print.c lib/lib_binary_tree.c lib/lib_binary_tree_node.c lib/lib_key_array.c
 LIB_OBJS = $(LIB_SRC:.c=.o)
 LIB_STATIC = libmylib.a
 TARGET = program

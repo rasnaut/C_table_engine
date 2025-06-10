@@ -160,13 +160,13 @@ void binary_tree_print(const BinaryTree *tree)
         return;
     }
     printf("Binary Tree (size=%zu, height=%zu):\n", tree->size, tree->height);
-    binary_tree_node_recursive_print_tree_view(tree->root, 0);
+    binary_tree_node_iterative_print_tree_view(tree->root);
 }
 
 void binary_tree_print_sort_view(const BinaryTree *tree)
 {
     if(tree && tree->root)
-        binary_tree_node_recursive_print_sort_view(tree->root);
+        binary_tree_node_iterative_print_sort_view(tree->root);
 }
 
 size_t binary_tree_calculate_height(const BinaryTree *node)

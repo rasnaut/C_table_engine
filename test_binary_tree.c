@@ -9,7 +9,7 @@ void test_create_and_destory() {
     BinaryTree* tree = binary_tree_create();
     assert(tree != NULL);
 
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
     printf("✅ test_create_and_destory passed\n");
 }
 
@@ -21,7 +21,7 @@ void test_create_insert_and_destory() {
     binary_tree_insert(tree, "k2", "data2");
     binary_tree_insert(tree, "k3", "data3");
 
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
     printf("✅ test_create_insert_and_destory passed\n");
 }
 
@@ -45,7 +45,7 @@ void test_insert_and_search() {
     BinaryTreeNode* missing = binary_tree_search(tree, "missing");
     assert(missing == NULL);
 
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
     printf("✅ test_insert_and_search passed\n");
 }
 
@@ -58,7 +58,7 @@ void test_duplicate_insertion() {
     assert(node != NULL);
     assert(strcmp(node->data, "second") == 0);
 
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
     printf("✅ test_duplicate_insertion passed\n");
 }
 
@@ -89,8 +89,8 @@ void test_filtering() {
     assert(found != NULL);
     assert(strcmp(found->data, "ca") == 0);
 
-    binary_tree_destroy(tree);
-    binary_tree_destroy(result);
+    binary_tree_destroy(&tree);
+    binary_tree_destroy(&result);
     printf("✅ test_filtering passed\n");
 }
 
@@ -110,7 +110,7 @@ void test_special_search() {
     //assert(keyArray->size == 3); // "banana", "carrot", "ananas"
     
 
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
     key_array_delete(keyArray);
     printf("✅ test_special_search passed\n");
 }
@@ -127,7 +127,7 @@ void test_erase_leaf_node() {
     assert(binary_tree_search(tree, "a") != NULL);
     assert(binary_tree_search(tree, "b") != NULL);
 
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
     printf("test_erase_leaf_node passed\n");
 }
 
@@ -142,7 +142,7 @@ void test_erase_node_with_one_child() {
     assert(binary_tree_search(tree, "b") != NULL);
     assert(strcmp(binary_tree_search(tree, "b")->data, "right child") == 0);
 
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
     printf("test_erase_node_with_one_child passed\n");
 }
 
@@ -165,7 +165,7 @@ void test_erase_node_with_two_children() {
     assert(binary_tree_search(tree, "z") != NULL);
     assert(binary_tree_search(tree, "m") != NULL);
 
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
     printf("test_erase_node_with_two_children passed\n");
 }
 
@@ -181,7 +181,7 @@ void test_erase_root_node() {
     assert(binary_tree_search(tree, "a") != NULL);
     assert(binary_tree_search(tree, "z") != NULL);
 
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
     printf("test_erase_root_node passed\n");
 }
 
@@ -224,7 +224,7 @@ void test_binary_tree_create_from_file() {
     printf("STEP 3 Succsesfully done! Binary tree worked well\n"); 
 
     // Шаг 4: чистим память
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
     remove(filename);
 
     printf("test_binary_tree_create_from_file passed!\n");
@@ -250,7 +250,7 @@ void test_generate_dot() {
 
     printf("DOT файл успешно создан.\n");
 
-    binary_tree_destroy(tree);
+    binary_tree_destroy(&tree);
 }
 
 
