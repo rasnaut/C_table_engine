@@ -46,33 +46,34 @@ void node234_add_child(Node234 *parent, Node234 *child)
     parent->child_count++;
 }
 
-void split_child(Node234 *parent, int child_index, Node234 *child)
-{
-    Node234* new_node = node234_create_node(child->child_count, parent);
+void split_child(Node234 *parent, int child_index, Node234 *child) {
+    // Новый узел для правой половины
+    Node234* new_node = node234_create_node(0, parent);
     new_node->key_count = 1;
     new_node->elements[0] = child->elements[2];
 
-    if (child->child_count > 3) {
+    // Копируем потомков, если они есть
+    if (child->child_count > 0) {
         node234_add_child(new_node, child->children[2]);
         node234_add_child(new_node, child->children[3]);
         child->children[2] = NULL;
         child->children[3] = NULL;
+        child->child_count = 2;
     }
 
+    // Сохраняем только первую половину у исходного узла
     child->key_count = 1;
 
-    for (int j = parent->key_count; j >= child_index+1; j--)
+    // Сдвигаем детей и ключи родителя, чтобы вставить новый элемент
+    for (int j = parent->key_count; j > child_index; j--) {
         parent->children[j+1] = parent->children[j];
-
-    parent->children[child_index+1] = new_node;
-    new_node->parent = parent;
-
-    for (int j = parent->key_count - 1; j >= child_index; j--) {
-        parent->elements[j+1] = parent->elements[j];
+        parent->elements[j] = parent->elements[j-1];
     }
 
+    parent->children[child_index + 1] = new_node;
     parent->elements[child_index] = child->elements[1];
     parent->key_count++;
+    parent->child_count++;
 }
 
 void insert_nonfull(Node234* node, const char* key, const char* value) {
@@ -107,7 +108,8 @@ void insert(Node234** root_ref, const char* key, const char* value) {
     Node234* root = *root_ref;
     if (root->key_count == MAX_KEYS) {
         Node234* new_root = node234_create_node(0, NULL);
-        new_root->children[0] = root;
+        new_root->children[new_root->child_count] = root;
+        new_root->child_count++;
         split_child(new_root, 0, root);
         insert_nonfull(new_root, key, value);
         *root_ref = new_root;
@@ -126,26 +128,28 @@ void node234_tree_print(Node234* node, int level) {
         if (i != node->key_count - 1) printf(", ");
     }
     printf("]\n");
-    for (int i = 0; i <= node->key_count; ++i)
+    for (int i = 0; i < node->child_count; ++i)
         node234_tree_print(node->children[i], level + 1);
 }
 
 Element* node234_search_by_key(Node234* root, const char* key) {
+    printf("Searching for key: %s\n", key);
     Node234* current = root;
 
     while (current) {
-        int i = 0;
+        int key_index = 0;
         // Ищем первый ключ больше либо равный искомому
-        while (i < current->key_count && strcmp(key, current->elements[i].key) > 0)
-            i++;
-
+        while (key_index < current->key_count && strcmp(key, current->elements[key_index].key) > 0)
+            key_index++;
+            
         // Нашли точное совпадение
-        if (i < current->key_count && strcmp(key, current->elements[i].key) == 0)
-            return &current->elements[i];
+        if (key_index < current->key_count && strcmp(key, current->elements[key_index].key) == 0)
+            return &current->elements[key_index];
 
-        if (!current->child_count) return NULL; // Если это лист, больше некуда идти
+        if (!current->child_count) 
+            return NULL; // Если это лист, больше некуда идти
 
-        current = current->children[i-1]; // Иначе спускаемся к следующему ребёнку
+        current = current->children[key_index]; // Иначе спускаемся к следующему ребёнку
     }
     return NULL;
 }

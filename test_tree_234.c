@@ -6,7 +6,7 @@
 void test_insert_and_search() {
     printf("Test: Insert and Search\n");
     Node234* tree = node234_create_node(0, NULL);
-
+    
     insert(&tree, "M", "10");
     insert(&tree, "B", "20");
     insert(&tree, "Q", "30");
@@ -17,11 +17,6 @@ void test_insert_and_search() {
     node234_tree_print(tree, 0);
 
     Element* e = node234_search_by_key(tree, "B");
-    if(e == NULL) {
-        printf("Element with key 'B' not found.\n");
-    } else {
-        printf("Found element with key 'B': %s\n", e->value);
-    }
     assert(e != NULL && strcmp(e->value, "20") == 0);
 
     e = node234_search_by_key(tree, "Z");
@@ -95,6 +90,7 @@ void test_max_diff_symbols() {
 }
 
 int main() {
+    setbuf(stdout, NULL);
     test_insert_and_search();
     test_print();
     test_contained_substring();
