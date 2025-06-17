@@ -67,11 +67,15 @@ void split_child(Node234 *parent, int child_index, Node234 *child) {
     // Сдвигаем детей и ключи родителя, чтобы вставить новый элемент
     for (int j = parent->key_count; j > child_index; j--) {
         parent->children[j+1] = parent->children[j];
+        parent->children[j+1]->parent = parent;
         parent->elements[j] = parent->elements[j-1];
     }
 
     parent->children[child_index + 1] = new_node;
+    new_node->parent = parent;
+   
     parent->elements[child_index] = child->elements[1];
+    child->parent = parent;
     parent->key_count++;
     parent->child_count++;
 }
@@ -290,7 +294,7 @@ void node234_destroy(Node234* root) {
             if(node) {
                 node->children[node->child_count - 1] = NULL;
                 node->child_count--;
-            }
+            } 
         }
     }
 }

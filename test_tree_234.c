@@ -3,6 +3,31 @@
 #include <string.h>
 #include "lib/lib_tree_234.h" // подключаем твои структуры и функции
 
+void test_simple_create_and_destry_node() {
+    printf("Test: Create and Destroy node\n");
+    Node234* tree = node234_create_node(0, NULL);
+    assert(tree != NULL);
+    assert(tree->key_count == 0);
+    assert(tree->child_count == 0);
+    node234_destroy(tree);
+    printf("Test create and destroy node passed.\n");
+}
+
+void test_simple_create_insert_and_destry_node() {
+    printf("Test: Create, Insert and Destroy node\n");
+    Node234* tree = node234_create_node(0, NULL);
+    assert(tree != NULL);
+    assert(tree->key_count == 0);
+    assert(tree->child_count == 0);
+    insert(&tree, "M", "10");
+    insert(&tree, "B", "20");
+    insert(&tree, "Q", "30");
+    insert(&tree, "A", "40");
+    node234_tree_print(tree, 0);
+    node234_destroy(tree);
+    printf("Test create and destroy node passed.\n");
+}
+
 void test_insert_and_search() {
     printf("Test: Insert and Search\n");
     Node234* tree = node234_create_node(0, NULL);
@@ -91,6 +116,8 @@ void test_max_diff_symbols() {
 
 int main() {
     setbuf(stdout, NULL);
+    test_simple_create_and_destry_node();
+    test_simple_create_insert_and_destry_node();
     test_insert_and_search();
     test_print();
     test_contained_substring();
