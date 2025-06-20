@@ -114,6 +114,29 @@ void test_max_diff_symbols() {
     node234_destroy(tree);
 }
 
+void test_node234_find_max() {
+    printf("Running test_node234_find_max...\n");
+
+    Node234* root = node234_create_node(0, NULL);
+
+    insert(&root, "banana", "yellow");
+    insert(&root, "apple", "green");
+    insert(&root, "zebra", "black-white");
+    insert(&root, "dog", "bark");
+    insert(&root, "cat", "meow");
+
+    Element max = node234_find_max(root);
+
+    if (strcmp(max.key, "zebra") == 0 && strcmp(max.value, "black-white") == 0) {
+        printf("✅ test_node234_find_max passed\n");
+    } else {
+        printf("❌ test_node234_find_max failed. Got: %s -> %s\n", max.key, max.value);
+    }
+
+    // Освобождение памяти желательно добавить (free_tree), если у тебя есть такая функция
+}
+
+
 int main() {
     setbuf(stdout, NULL);
     test_simple_create_and_destry_node();
@@ -122,6 +145,7 @@ int main() {
     test_print();
     test_contained_substring();
     test_max_diff_symbols();
+    test_node234_find_max();
     printf("All tests passed!\n");
     return 0;
 }

@@ -431,3 +431,10 @@ int node234_delete_by_key(Node234 **root_ref, const char *key) {
     }
     return 1;
 }
+
+Element node234_find_max(Node234* node) {
+    while (node->child_count > 0) {
+        node = node->children[node->child_count - 1];
+    }
+    return node->elements[node->key_count - 1];
+}

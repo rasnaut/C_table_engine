@@ -1,4 +1,5 @@
-
+#ifndef LIB_TREE_234_H
+#define LIB_TREE_234_H
 
 #include "lib_key_array.h"
 
@@ -37,9 +38,12 @@ KeyArray* node234_get_all_nodes_contained_substring(
     Node234* root, const char* substring);
 KeyArray* node234_get_all_nodes_max_diff_symbols(
     const Node234* root, const char* target_key);
-void node234_erase_node_by_key(Node234* root, const char* key);
+
+Element node234_find_max(Node234* node);
+
+int node234_delete_by_key(Node234** root, const char* key);
 
 void node234_print_sort_view(const Node234* root);
 
 
-
+#endif // LIB_TREE_234_H

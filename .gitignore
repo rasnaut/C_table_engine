@@ -5,3 +5,5 @@
 program
 test_library
 test_binary_tree
+test_tree_234
+test_tree_234.a
