@@ -6,12 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "lib_tree_234.h"
+#include "work_library.h"
 
 Node234* node234_create_node(int child_count, Node234* parent) {
     Node234* node = (Node234*)malloc(sizeof(Node234));
     if (!node) {
         fprintf(stderr, "Error: Memory allocation failed for Node234\n");
-        exit(EXIT_FAILURE);
+        NULL;
     }
     node->key_count = 0;
     node->child_count = child_count;
@@ -35,27 +36,35 @@ void node234_delete_node(Node234* node) {
     free(node);
 }
 
-void node234_add_child(Node234 *parent, Node234 *child)
+int node234_add_child(Node234 *parent, Node234 *child)
 {
     if (parent->child_count >= MAX_CHILDREN) {
         fprintf(stderr, "Error: Cannot add child, maximum children limit reached\n");
-        return;
+        return  -1; // Maximum children limit reached
     }
     parent->children[parent->child_count] = child;
     child->parent = parent;
     parent->child_count++;
+    return 0; // Success
 }
 
-void split_child(Node234 *parent, int child_index, Node234 *child) {
+int split_child(Node234 *parent, int child_index, Node234 *child) {
     // Новый узел для правой половины
     Node234* new_node = node234_create_node(0, parent);
+    if(!new_node) {
+        fprintf(stderr, "Error: Memory allocation failed for new node\n");
+        return -1; // Memory allocation error
+    }
     new_node->key_count = 1;
     new_node->elements[0] = child->elements[2];
 
     // Копируем потомков, если они есть
     if (child->child_count > 0) {
-        node234_add_child(new_node, child->children[2]);
-        node234_add_child(new_node, child->children[3]);
+        if ( node234_add_child(new_node, child->children[2]) ||
+             node234_add_child(new_node, child->children[3])) {
+             fprintf(stderr, "Error: add new child\n");
+             return -1; // Error adding new child
+        }
         child->children[2] = NULL;
         child->children[3] = NULL;
         child->child_count = 2;
@@ -78,9 +87,10 @@ void split_child(Node234 *parent, int child_index, Node234 *child) {
     child->parent = parent;
     parent->key_count++;
     parent->child_count++;
+    return 0; // Success
 }
 
-void insert_nonfull(Node234* node, const char* key, const char* value) {
+int insert_nonfull(Node234* node, const char* key, const char* value) {
     Node234* current = node;
 
     while(1) {
@@ -94,32 +104,48 @@ void insert_nonfull(Node234* node, const char* key, const char* value) {
             current->elements[key_index + 1].key = strdup(key);
             current->elements[key_index + 1].value = strdup(value);
             current->key_count++;
-            return;
+            return  0; // Success
         } else {
             while (key_index >= 0 && strcmp(key, current->elements[key_index].key) < 0) key_index--;
             
             key_index++;
             if (current->children[key_index]->key_count == MAX_KEYS) {
-                split_child(current, key_index, current->children[key_index]);
+                if(split_child(current, key_index, current->children[key_index])) {
+                    fprintf(stderr, "Error: Failed to split child node\n");
+                    return -1; // Memory allocation error or other failure
+                }
                 if (strcmp(key, current->elements[key_index].key) > 0) key_index++;
             }
             current = current->children[key_index];
         }
     }
+    return 0; // Success
 }
 
-void insert(Node234** root_ref, const char* key, const char* value) {
+int node234_insert(Node234** root_ref, const char* key, const char* value) {
     Node234* root = *root_ref;
     if (root->key_count == MAX_KEYS) {
         Node234* new_root = node234_create_node(0, NULL);
+        if(!new_root) {
+            fprintf(stderr, "Error: Memory allocation failed for new root\n");
+            return -1; // Memory allocation error
+        }
         new_root->children[new_root->child_count] = root;
         new_root->child_count++;
-        split_child(new_root, 0, root);
-        insert_nonfull(new_root, key, value);
+        if( split_child(new_root, 0, root) || 
+            insert_nonfull(new_root, key, value)) {
+            fprintf(stderr, "Error: Failed to insert into new root\n");
+            node234_delete_node(new_root);
+            return -1; // Memory allocation error or other failure
+        }
         *root_ref = new_root;
     } else {
-        insert_nonfull(root, key, value);
+        if( insert_nonfull(root, key, value) ) {
+            fprintf(stderr, "Error: Failed to insert into non-full node\n");
+            return -1; // Memory allocation error or other failure
+        }
     }
+    return 0; // Success
 }
 
 // Simple traversal to visualize
@@ -437,4 +463,66 @@ Element node234_find_max(Node234* node) {
         node = node->children[node->child_count - 1];
     }
     return node->elements[node->key_count - 1];
+}
+
+Node234* node234_create_from_file(const char* filename) {
+    if (!filename) {
+        fprintf(stderr, "Error: No filename provided\n");
+        return NULL;
+    }
+
+    printf("Importing binary tree from file: %s\n", filename);
+
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        fprintf(stderr, "Error: Could not open file %s\n", filename);
+        return NULL;
+    }
+    printf("File %s opened\n", filename);
+
+    Node234* root = node234_create_node(0, NULL);
+    if (!root) {
+        printf("Error: Failed to create 2-3-4 tree\n");
+        return NULL;
+    }
+
+    char* key = NULL;
+    char* data = NULL;
+    while ((key = getstr(file)) != NULL) {
+        
+        if (!key || strlen(key) == 0) {
+            fprintf(stderr, "Error: Invalid key read from file\n");
+            free(key);
+            node234_destroy(root);
+            fclose(file);
+            return NULL;
+        }
+        printf("Read key: '%s'\n", key);
+        data = getstr(file);
+        if (!data) {
+            fprintf(stderr, "Error: Missing data for key '%s'\n", key);
+            free(key);
+            node234_destroy(root);
+            fclose(file);
+            return NULL;
+        }
+        printf("Read value: '%s'\n", data);
+
+        if (node234_insert(&root, key, data)) {
+            fprintf(stderr, "Error: Failed to insert key '%s'\n", key);
+            free(key);
+            free(data);
+            node234_destroy(root);
+            fclose(file);
+            return NULL;
+        }
+
+        printf("Inserted key: '%s' with data: '%s'\n", key, data);
+
+        free(key);
+        free(data);
+    }
+
+    fclose(file);
+    return root;
 }

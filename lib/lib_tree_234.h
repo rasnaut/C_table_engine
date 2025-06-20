@@ -21,12 +21,12 @@ typedef struct Node234 {
 
 Node234* node234_create_node(int child_count, Node234* parent);
 void node234_delete_node();
-void node234_add_child(Node234* parent, Node234* child);
+int node234_add_child(Node234* parent, Node234* child);
 
-void split_child(Node234* parent, int child_index, Node234* child);
+int split_child(Node234* parent, int child_index, Node234* child);
 
-void insert_nonfull(Node234* node, const char* key, const char* value);
-void insert(Node234** root_ref, const char* key, const char* value);
+int insert_nonfull(Node234* node, const char* key, const char* value);
+int node234_insert(Node234** root_ref, const char* key, const char* value);
 
 void print_tree(Node234* node, int level);
 
@@ -44,6 +44,8 @@ Element node234_find_max(Node234* node);
 int node234_delete_by_key(Node234** root, const char* key);
 
 void node234_print_sort_view(const Node234* root);
+
+Node234* node234_create_from_file(const char* filename);
 
 
 #endif // LIB_TREE_234_H

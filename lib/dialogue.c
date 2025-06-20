@@ -28,7 +28,7 @@ int insert_node_to_234_tree(Node234** root_ref) {
         return -1;
     }
 
-    insert(root_ref, key, value);
+    node234_insert(root_ref, key, value);
     free(key);
     free(value);
     printf("\u2705 Node inserted successfully\n");
@@ -108,27 +108,15 @@ Node234* node_234_tree_file_import(int* eof_tmp) {
         return NULL;
     }
 
-    FILE* file = fopen(file_name, "r");
+
+    Node234* root = node234_create_from_file(file_name);
+
     free(file_name);
-    if (!file) {
-        printf("❌ Error: File could not be opened\n");
+    if (!root) {
+        *eof_tmp = -1;
+        printf("Error: Failed to import tree from file\n");
         return NULL;
     }
-
-    Node234* root = node234_create_node(0, NULL);
-    char* line = NULL;
-    size_t len = 0;
-
-    while (getline(&line, &len, file) != -1) {
-        char* key = strtok(line, " \t\n");
-        char* value = strtok(NULL, "\t\n");
-        if (key && value) {
-            insert(&root, key, value);
-        }
-    }
-
-    free(line);
-    fclose(file);
     printf("✅ Tree imported from file\n");
     return root;
 }
