@@ -1,21 +1,18 @@
-# Тестовый Makefile
-
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -I./lib
 LDFLAGS = 
 LDLIBS = -lreadline -lncurses -lm
 
-SRC = test_library.c
-LIB_SRC = lib/library.c lib/work_library.c
+SRC = test_binary_tree.c
+LIB_SRC = lib/lib_binary_tree.c lib/lib_binary_tree_node.c lib/lib_key_array.c lib/work_library.c lib/graphviz_print.c
 LIB_OBJS = $(LIB_SRC:.c=.o)
-LIB_STATIC = libmylib.a
+LIB_STATIC = test_binary_tree.a
 
-TEST_BIN = test_library
+TARGET = test_binary_tree
 
-# Сборка тестов
-all: $(TEST_BIN)
+all: $(TARGET)
 
-$(TEST_BIN): $(SRC) $(LIB_STATIC)
+$(TARGET): $(SRC) $(LIB_STATIC)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) $(LIB_STATIC) -o $@ $(LDLIBS)
 
 $(LIB_STATIC): $(LIB_OBJS)
@@ -24,15 +21,15 @@ $(LIB_STATIC): $(LIB_OBJS)
 lib/%.o: lib/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-run: $(TEST_BIN)
-	./$(TEST_BIN)
+run: $(TARGET)
+	./$(TARGET)
 
 clean:
-	rm -f lib/*.o $(TEST_BIN) $(LIB_STATIC)
+	rm -f lib/*.o $(TARGET) $(LIB_STATIC)
 
 build_debug:
 	$(MAKE) clean
 	$(MAKE) CFLAGS="-Wall -Wextra -std=c11 -g -O0 -I./lib"
 
 valgrind: build_debug
-	valgrind --leak-check=full --error-exitcode=1 ./$(TEST_BIN)
+	valgrind --leak-check=full --error-exitcode=1 ./$(TARGET)

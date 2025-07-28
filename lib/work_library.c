@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "library.h"
 
 /*int getInt(int *x) 
 {
@@ -44,47 +43,39 @@
     }
 }*/
 
-char *getstr(FILE *stream)
-{
-   char buf[81] = {0};
-   char *res = NULL;
-   int len = 0;
-   int n = 0;
-   void *check_mem;
+char *getstr(FILE *stream) {
+    char buf[81] = {0};
+    char *res = NULL;
+    int len = 0;
+    int n = 0;
 
-   do {
-      n = fscanf(stream, "%80[^\n]", buf);
-      if ((n < 0) && (!res)){
-        return NULL;
-    }
-    else if (n > 0) {
-       int chunk_len =(int)strlen(buf);
-       int str_len = len + chunk_len;
-       res = realloc(res, str_len + 1);
-       if (!res)
-       {
-          return NULL;
-       }
-   
-       check_mem = memcpy(res + len, buf, chunk_len);
-       if (check_mem != res+len){
-          return NULL;
-       }
-       len = str_len;
-    }
-    else {
-      fscanf(stream, "%*c");
-    }
-   } while (n > 0);
+    while (1) {
+        n = fscanf(stream, "%80[^\n]", buf);
+        if (n == EOF && !res) {
+            return NULL;
+        } else if (n > 0) {
+            int chunk_len = (int)strlen(buf);
+            int new_len = len + chunk_len;
+            char *tmp = realloc(res, new_len + 1);
+            if (!tmp) {
+                free(res);
+                return NULL;
+            }
+            res = tmp;
+            memcpy(res + len, buf, chunk_len);
+            len = new_len;
+        }
 
-   if (len > 0) {
-      res[len] = '\0';
-   }
-   else {
-      res = calloc(1, sizeof(char));
-      if (!res) {
-        return NULL;
-      }
-   }
-   return res;
+        int ch = getc(stream);
+        if (ch == '\n' || ch == EOF)
+            break;
+    }
+
+    if (res) {
+        res[len] = '\0';
+    } else {
+        res = calloc(1, sizeof(char));
+    }
+
+    return res;
 }
