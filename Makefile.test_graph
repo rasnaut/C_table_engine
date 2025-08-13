@@ -1,0 +1,60 @@
+# Makefile for graph tests
+
+CC       := gcc
+CFLAGS   := -Wall -Wextra -std=c11 -O2 -MMD -MP
+CPPFLAGS := -I.
+LDFLAGS  :=
+LDLIBS   :=
+
+OBJDIR   := build
+LIBDIR   := lib/graph
+
+# library sources
+LIB_SRC  := $(LIBDIR)/lib_vertex_handle.c \
+            $(LIBDIR)/lib_edge.c \
+            $(LIBDIR)/lib_edge_sorted_cycle_list.c \
+            $(LIBDIR)/lib_vertex.c
+
+LIB_OBJS   := $(LIB_SRC:%.c=$(OBJDIR)/%.o)
+LIB_DEPS   := $(LIB_OBJS:.o=.d)
+LIB_STATIC := libgraph.a
+
+# test binary
+TEST_SRC := $(LIBDIR)/test_graph.c
+TEST_BIN := test_graph
+
+.PHONY: all run clean build_debug asan valgrind
+
+all: $(TEST_BIN)
+
+$(TEST_BIN): $(TEST_SRC) $(LIB_STATIC)
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ $(TEST_SRC) $(LIB_STATIC) $(LDLIBS)
+
+$(LIB_STATIC): $(LIB_OBJS)
+	ar rcs $@ $^
+
+# pattern rule: build/*.o from source
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+run: $(TEST_BIN)
+	./$(TEST_BIN)
+
+clean:
+	rm -rf $(OBJDIR) $(TEST_BIN) $(LIB_STATIC)
+
+build_debug:
+	$(MAKE) clean
+	$(MAKE) CFLAGS="-Wall -Wextra -std=c11 -g -O0 -MMD -MP" all
+
+asan:
+	$(MAKE) clean
+	$(MAKE) CFLAGS="-Wall -Wextra -std=c11 -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer -MMD -MP" \
+	        LDFLAGS="-fsanitize=address,undefined" all
+
+valgrind: build_debug
+	valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./$(TEST_BIN)
+
+# auto dependencies for library objects
+-include $(LIB_DEPS)
