@@ -13,7 +13,8 @@ LIBDIR   := lib/graph
 LIB_SRC  := $(LIBDIR)/lib_vertex_handle.c \
             $(LIBDIR)/lib_edge.c \
             $(LIBDIR)/lib_edge_sorted_cycle_list.c \
-            $(LIBDIR)/lib_vertex.c
+            $(LIBDIR)/lib_vertex.c \
+			$(LIBDIR)/lib_graph.c
 
 LIB_OBJS   := $(LIB_SRC:%.c=$(OBJDIR)/%.o)
 LIB_DEPS   := $(LIB_OBJS:.o=.d)

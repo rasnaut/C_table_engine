@@ -5,5 +5,8 @@
 program
 test_library
 test_binary_tree
+test_graph
 *.png
 *.dot
+*.d
+*.a
