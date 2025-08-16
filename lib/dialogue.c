@@ -139,6 +139,39 @@ Table* file_import(Table* table, int* eof_tmp)
     return res;
 }
 
+Table* file_bin_import(Table* table, int* eof_tmp)
+{
+    char* file_name = readline("Enter file name: ");
+    if (!file_name) {
+        *eof_tmp = -1;
+        return NULL;
+    }
+
+    Table* res = core_file_bin_import(table, file_name);
+    free(file_name);
+    
+    if (res == NULL) 
+    {
+        printf("Error: File not found/invalid data entry\n");
+        return NULL;
+    }
+    return res;
+}
+
+int file_bin_export(Table* table, int* eof_tmp)
+{
+    char* file_name = readline("Enter file name: ");
+    if (!file_name) {
+        *eof_tmp = -1;
+        return -1;
+    }
+
+    int res = core_file_bin_export(table, file_name);
+    free(file_name);
+    
+    return res;
+}
+
 int special_search(Table* table)
 {
     char* search_key = readline("Enter the search key: ");

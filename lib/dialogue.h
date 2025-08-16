@@ -10,6 +10,8 @@ int clear_table(Table* table);
 void print_table(Table* table);
 
 Table* file_import(Table* table,int* eof_tmp);
+Table* file_bin_import(Table* table, int* eof_tmp);
+int file_bin_export(Table* table, int* eof_tmp);
 
 int special_search(Table* table);
 

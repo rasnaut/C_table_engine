@@ -13,13 +13,16 @@ int main()
         return -1;
     }
     while(1) {
-        printf("1 - Inserting an element into a table\n");
-        printf("2 - Searching for an elements in a table\n");
-        printf("3 - Removing an element by key and release from a table\n");
-        printf("4 - Outputting a table to the console\n");
-        printf("5 - Importing a table from a file\n");
-        printf("6 - Searching for an element by key and release in a table\n");
-        printf("7 - Exit\n");
+        unsigned short point_number = 1;
+        printf("%d - Inserting an element into a table\n", point_number++);
+        printf("%d - Searching for an elements in a table\n", point_number++);
+        printf("%d - Removing an element by key and release from a table\n", point_number++);
+        printf("%d - Outputting a table to the console\n", point_number++);
+        printf("%d - Importing a table from a file\n", point_number++);
+        printf("%d - Searching for an element by key and release in a table\n", point_number++);
+        printf("%d - Importing a table from a binary file\n", point_number++);
+        printf("%d - Exporting a table to a binary file\n", point_number++);
+        printf("%d - Exit\n", point_number++);
 
         char* input_str = readline("Enter comand number: ");
         int input = atoi(input_str);
@@ -46,6 +49,12 @@ int main()
             special_search(table);
             return 0;
         case 7:
+            if(file_bin_import(table,&eof_tmp)==NULL && eof_tmp == -1) return -1;
+            break;
+        case 8:
+            if(file_bin_export(table,&eof_tmp)!=0 && eof_tmp == -1) return -1;
+            break;
+        case 9:
             free_table(table);
             return 0;
         default:

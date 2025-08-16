@@ -27,5 +27,7 @@ unsigned long djb2_hash(const char* str); // Hash function
 
 
 Table* core_file_import(Table* table,const char* file_name);
+Table* core_file_bin_import(Table* table, const char* file_name);
+int core_file_bin_export(const Table* table, const char* file_name);
 
 #endif

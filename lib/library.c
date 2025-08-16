@@ -151,7 +151,6 @@ void core_print_table(Table* table)
             print_list(slot->node);
         }
     }
-
 }
 
 void free_table(Table* table) 
@@ -202,6 +201,99 @@ Table* core_file_import(Table* table, const char* file_name) {
     return table;
 }
 
+Table* core_file_bin_import(Table* table, const char* file_name) {
+    if (!table || !file_name) return NULL;
+
+    FILE* f = fopen(file_name, "rb");
+    if (!f) return NULL;
+
+    const unsigned int KEY_MAX = 1u << 20; // 1 MiB — ограничение на длину ключа (защита от мусорных/вредных файлов)
+    while (1) {
+        unsigned int key_len = 0;
+        size_t r1 = fread(&key_len, sizeof(unsigned int), 1, f);
+        if (r1 == 0) {
+            // нормальное завершение по EOF
+            break;
+        }
+        if (r1 != 1) {
+            // битая запись/ошибка чтения
+            fclose(f);
+            return NULL;
+        }
+
+        if (key_len == 0 || key_len > KEY_MAX) {
+            // невалидная длина
+            fclose(f);
+            return NULL;
+        }
+
+        char* key = (char*)malloc((size_t)key_len + 1);
+        if (!key) {
+            fclose(f);
+            return NULL;
+        }
+
+        // читаем key_len байт ключа (без завершающего 0)
+        if (fread(key, 1, key_len, f) != key_len) {
+            free(key);
+            fclose(f);
+            return NULL;
+        }
+        key[key_len] = '\0';
+
+        unsigned int info_u32 = 0;
+        if (fread(&info_u32, sizeof(unsigned int), 1, f) != 1) {
+            free(key);
+            fclose(f);
+            return NULL;
+        }
+
+        // вставляем (core_insert сам разрулит дубликаты/версии)
+        if (core_insert(key, (unsigned int)info_u32, table) == 0) {
+            // 0 у тебя значит «не вставлено» (переполнение/коллизия с иным ключом и т.п.)
+            // считаем это ошибкой импорта
+            free(key);
+            fclose(f);
+            return NULL;
+        }
+        free(key);
+    }
+    fclose(f);
+    return table;
+}
+
+int core_file_bin_export(const Table* table, const char* file_name) {
+    if (!table || !file_name) return -1;
+
+    FILE* f = fopen(file_name, "wb");
+    if (!f) return -1;
+
+    for (size_t i = 0; i < table->max_size; ++i) {
+        const KeySpace* slot = &table->ks[i];
+        if (!slot->busy || !slot->key) continue;
+
+        const char* key = slot->key;
+        size_t key_len_sz = strlen(key);
+        if (key_len_sz > (size_t)~(unsigned int)0) { /* > UINT_MAX */
+            fclose(f); return -1;
+        }
+        unsigned int key_len = (unsigned int)key_len_sz;
+
+        const Node* cur = slot->node;
+        while (cur) {
+            unsigned int info = cur->info;
+            if (fwrite(&key_len, sizeof(unsigned int), 1, f) != 1)    { fclose(f); return -1; } // записываем длину ключа
+            if (key_len > 0 && fwrite(key, 1, key_len, f) != key_len) { fclose(f); return -1; } // записываем ключ
+            if (fwrite(&info, sizeof(unsigned int), 1, f) != 1)       { fclose(f); return -1; } // записываем информацию
+
+            cur = cur->next;
+        }
+    }
+
+    if (fflush(f) != 0) { fclose(f); return -1; }
+    fclose(f);
+    return 0;
+}
 
 unsigned long djb2_hash(const char *str)
 {
