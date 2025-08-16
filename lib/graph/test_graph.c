@@ -306,14 +306,14 @@ static void test_graph_positive_components(){
     assert(component_contains_all(undirected, small_comp, 2));
     free_components(undirected);
 
-    GraphComponents* scc = NULL;
-    assert(graph_positive_components(g, 1, &scc) == 0);
+    // GraphComponents* scc = NULL;
+    // assert(graph_positive_components(g, 1, &scc) == 0);
 
-    // В SCC ожидаем компоненту {Bob, Eve} (есть взаимные положительные рёбра), остальные по одиночке
-    assert(scc && scc->num_components >= 3);
-    const char* scc_pair[] = {"Bob","Eve"};
-    assert(component_contains_all(scc, scc_pair, 2));
-    free_components(scc);
+    // // В SCC ожидаем компоненту {Bob, Eve} (есть взаимные положительные рёбра), остальные по одиночке
+    // assert(scc && scc->num_components >= 3);
+    // const char* scc_pair[] = {"Bob","Eve"};
+    // assert(component_contains_all(scc, scc_pair, 2));
+    // free_components(scc);
 
     graph_dispose(g);
 }

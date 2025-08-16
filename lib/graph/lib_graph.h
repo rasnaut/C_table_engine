@@ -58,7 +58,7 @@ typedef struct GraphComponents {
 
 // directed_mode: 0 — слабосвязные на неориентированном положительном подграфе; 1 — SCC на ориентированном положительном подграфе
 int graph_positive_components(
-    Graph* g,
+    Graph* graph,
     int directed_mode,
     GraphComponents** out_result
 );

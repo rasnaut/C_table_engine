@@ -136,13 +136,20 @@ int    graph_is_empty(const Graph* graph) { return !graph || graph->size == 0; }
 // Общие хелперы для алгоритмов
 
 static Vertex** graph_vertices_to_array(Graph* graph, size_t* out_count) {
-    if (out_count) *out_count = 0;
-    if (!graph || !graph->head || graph->size == 0) return NULL;
+    if (out_count) 
+        *out_count = 0;
+    if (!graph || !graph->head || graph->size == 0) 
+        return NULL;
     Vertex** vertices = (Vertex**)malloc(sizeof(Vertex*) * graph->size);
-    if (!vertices) return NULL;
+    if (!vertices) 
+        return NULL;
     VertexNode* current = graph->head;
-    for (size_t i = 0; i < graph->size; ++i) { vertices[i] = current->v; current = current->next; }
-    if (out_count) *out_count = graph->size;
+    for (size_t i = 0; i < graph->size; ++i) { 
+        vertices[i] = current->v; 
+        current = current->next; 
+    }
+    if (out_count) 
+        *out_count = graph->size;
     return vertices;
 }
 
@@ -243,7 +250,11 @@ int graph_bfs_within_k(Graph* graph, const char* start_name, size_t max_hops, in
 // 2) Кратчайшая позитивная цепочка (Дейкстра)
 static int positive_edge_cost(int weight, int cost_mode) {
     if (cost_mode == 0) return 1; // равные стоимости (кол-во звеньев)
-    int bounded = weight; if (bounded < 1) bounded = 1; if (bounded > 10) bounded = 10;
+    int bounded = weight; 
+    if (bounded < 1) 
+        bounded = 1; 
+    if (bounded > 10) 
+        bounded = 10;
     return 11 - bounded; // чем больше вес, тем дешевле
 }
 
@@ -274,15 +285,28 @@ int graph_shortest_positive_chain(Graph* graph,
     int* distance      = (int*)malloc(sizeof(int) * total_vertices);
     int* predecessor   = (int*)malloc(sizeof(int) * total_vertices);
     int* visited       = (int*)calloc(total_vertices, sizeof(int));
-    if (!distance || !predecessor || !visited) { free(vertices); free(distance); free(predecessor); free(visited); return -1; }
+    if (!distance || !predecessor || !visited) { 
+        free(vertices); 
+        free(distance); 
+        free(predecessor); 
+        free(visited); 
+        return -1; 
+    }
 
-    for (size_t i = 0; i < total_vertices; ++i){ distance[i] = INT_MAX; predecessor[i] = -1; }
+    for (size_t i = 0; i < total_vertices; ++i) { distance[i] = INT_MAX; predecessor[i] = -1; }
     distance[src_index] = 0;
 
     for (size_t pass = 0; pass < total_vertices; ++pass) {
-        int best_vertex = -1; int best_dist = INT_MAX;
-        for (size_t i = 0; i < total_vertices; ++i) if (!visited[i] && distance[i] < best_dist) { best_dist = distance[i]; best_vertex = (int)i; }
-        if (best_vertex == -1) break;
+        int best_vertex = -1; 
+        int best_dist = INT_MAX;
+        for (size_t i = 0; i < total_vertices; ++i) 
+            if (!visited[i] && distance[i] < best_dist) { 
+                best_dist = distance[i]; 
+                best_vertex = (int)i; 
+            }
+
+        if (best_vertex == -1) 
+            break;
         visited[best_vertex] = 1;
         if (best_vertex == dst_index) break; // кратчайший найден
 
@@ -290,9 +314,15 @@ int graph_shortest_positive_chain(Graph* graph,
         if (!head_edge) continue;
         Edge* edge_iter = head_edge;
         for (size_t step = 0; step < vertices[best_vertex]->edges.size; ++step) {
-            if (!edge_iter->to || !edge_iter->to->vertex || edge_iter->weight <= 0) { edge_iter = edge_iter->next; continue; }
+            if (!edge_iter->to || !edge_iter->to->vertex || edge_iter->weight <= 0) { 
+                edge_iter = edge_iter->next; 
+                continue; 
+            }
             int neighbor_index = vertex_index_in_array(vertices, total_vertices, edge_iter->to->vertex);
-            if (neighbor_index < 0 || visited[neighbor_index]) { edge_iter = edge_iter->next; continue; }
+            if (neighbor_index < 0 || visited[neighbor_index]) { 
+                edge_iter = edge_iter->next; 
+                continue; 
+            }
             int cost = positive_edge_cost(edge_iter->weight, cost_mode);
             if (distance[best_vertex] != INT_MAX && distance[best_vertex] + cost < distance[neighbor_index]) {
                 distance[neighbor_index]    = distance[best_vertex] + cost;
@@ -371,30 +401,41 @@ static void dfs_directed_positive_transpose(Vertex** vertices, size_t count, int
 }
 
 int graph_positive_components(Graph* graph, int directed_mode, GraphComponents** out_result){
-    if (out_result) *out_result = NULL;
-    if (!graph || !out_result) return -1;
+    if (!graph || !out_result) 
+        return -1;
+    
+    *out_result = NULL;
 
-    size_t total_vertices = 0; Vertex** vertices = graph_vertices_to_array(graph, &total_vertices);
-    if (!vertices){
-        GraphComponents* empty = (GraphComponents*)calloc(1, sizeof(GraphComponents));
-        if (!empty) return -1;
-        *out_result = empty; return 0;
-    }
-
+    size_t total_vertices = 0;
     GraphComponents* result = (GraphComponents*)calloc(1, sizeof(GraphComponents));
-    if (!result){ free(vertices); return -1; }
+    if (!result) { 
+        return -1; 
+    }
+    Vertex** vertices = graph_vertices_to_array(graph, &total_vertices);
+    if (!vertices){
+        *out_result = result; 
+        return 0;
+    }
 
     if (!directed_mode){
         // Слабосвязные компоненты на неориентированном положительном подграфе
         int* visited = (int*)calloc(total_vertices, sizeof(int));
-        if (!visited){ free(vertices); free(result); return -1; }
+        if (!visited) { 
+            free(vertices); 
+            free(result); 
+            return -1; 
+        }
         for (size_t start = 0; start < total_vertices; ++start){
-            if (visited[start]) continue;
-            char** component_names = NULL; size_t component_size = 0;
-            // BFS по неориентированному положительному подграфу
+            if (visited[start])
+                continue;
+            char** component_names = NULL; 
+            size_t component_size = 0;
+            // BFS на неориентированном положительном подграфе
             int* queue = (int*)malloc(sizeof(int) * total_vertices);
-            int q_head = 0, q_tail = 0; queue[q_tail++] = (int)start; visited[start] = 1;
-            while (q_head < q_tail){
+            int q_head = 0, q_tail = 0; 
+            queue[q_tail++] = (int)start; 
+            visited[start] = 1;
+            while (q_head < q_tail) {
                 int current_index = queue[q_head++];
                 component_names_push(&component_names, &component_size, vertices[current_index]->name_of_person);
                 for (size_t other = 0; other < total_vertices; ++other){
@@ -405,13 +446,17 @@ int graph_positive_components(Graph* graph, int directed_mode, GraphComponents**
                     }
                 }
             }
-            // Добавляем компоненту в результат
+            // Добавляем компонента в результат
             size_t idx = result->num_components;
             size_t* new_sizes  = (size_t*)realloc(result->component_sizes, (idx + 1) * sizeof(size_t));
-            char*** new_names  = (char***)realloc(result->names,          (idx + 1) * sizeof(char**));
-            if (!new_sizes || !new_names){ /* OOM: best effort */ }
-            result->component_sizes = new_sizes; result->names = new_names;
-            result->component_sizes[idx] = component_size; result->names[idx] = component_names;
+            char*** new_names  = (char***)realloc(result->names,           (idx + 1) * sizeof(char**));
+            if (!new_sizes || !new_names) { 
+                /* OOM: best effort */ 
+            }
+            result->component_sizes = new_sizes; 
+            result->names = new_names;
+            result->component_sizes[idx] = component_size;
+            result->names[idx] = component_names;
             result->num_components = idx + 1;
         }
         free(visited);
@@ -419,24 +464,39 @@ int graph_positive_components(Graph* graph, int directed_mode, GraphComponents**
         // Сильно связные компоненты положительного ориентированного подграфа (Косараджу)
         int* visited = (int*)calloc(total_vertices, sizeof(int));
         int* order_indices = (int*)malloc(sizeof(int) * (total_vertices + 1)); // -1-terminated
-        if (!visited || !order_indices){ free(vertices); free(result); free(visited); free(order_indices); return -1; }
+        if (!visited || !order_indices) { 
+            free(vertices); 
+            free(result); 
+            free(visited); 
+            free(order_indices); 
+            return -1; 
+        }
         for (size_t i = 0; i <= total_vertices; i++) order_indices[i] = -1;
-        for (size_t i = 0; i < total_vertices; ++i) if (!visited[i]) dfs_directed_positive(vertices, total_vertices, (int)i, visited, order_indices);
+        for (size_t i = 0; i < total_vertices; ++i) {
+            if (!visited[i]) 
+                dfs_directed_positive(vertices, total_vertices, (int)i, visited, order_indices);
+        }
         // второй проход по обратному графу
         memset(visited, 0, sizeof(int) * total_vertices);
-        for (int pos = (int)total_vertices - 1; pos >= 0; --pos){
-            int start_index = order_indices[pos]; if (start_index < 0) continue; if (visited[start_index]) continue;
-            char** component_names = NULL; size_t component_size = 0;
+        for (int pos = (int)total_vertices - 1; pos >= 0; --pos) {
+            int start_index = order_indices[pos]; 
+            if (start_index < 0) continue;
+            if (visited[start_index]) continue;
+            char** component_names = NULL; 
+            size_t component_size = 0;
             dfs_directed_positive_transpose(vertices, total_vertices, start_index, visited, &component_names, &component_size);
             size_t idx = result->num_components;
             size_t* new_sizes  = (size_t*)realloc(result->component_sizes, (idx + 1) * sizeof(size_t));
             char*** new_names  = (char***)realloc(result->names,          (idx + 1) * sizeof(char**));
             if (!new_sizes || !new_names){ /* OOM best-effort */ }
-            result->component_sizes = new_sizes; result->names = new_names;
-            result->component_sizes[idx] = component_size; result->names[idx] = component_names;
+            result->component_sizes = new_sizes; 
+            result->names = new_names;
+            result->component_sizes[idx] = component_size; 
+            result->names[idx] = component_names;
             result->num_components = idx + 1;
         }
-        free(visited); free(order_indices);
+        free(visited); 
+        free(order_indices);
     }
 
     *out_result = result;
