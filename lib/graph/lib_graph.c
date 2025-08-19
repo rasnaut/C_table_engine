@@ -18,6 +18,17 @@ int edge_list_remove_invalid(EdgeSortedCycleList* list, size_t* removed_count);
 // =============================
 // Вспомогательные структуры и функции уровня Graph
 
+// уже была у тебя; теперь проверяем ошибки
+static int component_names_push(char*** names_array, size_t* count, const char* name){
+    char** grown = (char**)realloc(*names_array, (*count + 1) * sizeof(char*));
+    if (!grown) return -1;
+    *names_array = grown;
+    (*names_array)[*count] = strdup(name ? name : "");
+    if (!(*names_array)[*count]) return -1;
+    (*count)++;
+    return 0;
+}
+
 static VertexNode* vertex_node_create(Vertex* vertex) {
     VertexNode* node = (VertexNode*)malloc(sizeof(VertexNode));
     if (!node) return NULL;
@@ -293,7 +304,10 @@ int graph_shortest_positive_chain(Graph* graph,
         return -1; 
     }
 
-    for (size_t i = 0; i < total_vertices; ++i) { distance[i] = INT_MAX; predecessor[i] = -1; }
+    for (size_t i = 0; i < total_vertices; ++i) { 
+        distance[i] = INT_MAX; 
+        predecessor[i] = -1; 
+    }
     distance[src_index] = 0;
 
     for (size_t pass = 0; pass < total_vertices; ++pass) {
@@ -361,15 +375,7 @@ int graph_shortest_positive_chain(Graph* graph,
 // =============================
 // 3) Компоненты положительной достижимости
 
-static int component_names_push(char*** names_array, size_t* count, const char* name){
-    char** grown = (char**)realloc(*names_array, (*count + 1) * sizeof(char*));
-    if (!grown) return -1;
-    *names_array = grown;
-    (*names_array)[*count] = strdup(name ? name : "");
-    if (!(*names_array)[*count]) return -1;
-    (*count)++;
-    return 0;
-}
+
 
 static void dfs_directed_positive(Vertex** vertices, size_t count, int start_index, int* visited, int* order_indices){
     visited[start_index] = 1;
@@ -400,101 +406,163 @@ static void dfs_directed_positive_transpose(Vertex** vertices, size_t count, int
     }
 }
 
-int graph_positive_components(Graph* graph, int directed_mode, GraphComponents** out_result){
-    if (!graph || !out_result) 
+static void free_names_array(char** arr, size_t n) {
+    if (!arr) return;
+    for (size_t i = 0; i < n; ++i) free(arr[i]);
+    free(arr);
+}
+
+int graph_components_init(GraphComponents** out) {
+    GraphComponents* r = (GraphComponents*)calloc(1, sizeof(*r));
+    if (!r) return -1;
+    r->num_components = 0;
+    r->capacity = 0;
+    r->component_sizes = NULL;
+    r->names = NULL;
+    *out = r;
+    return 0;
+}
+
+void graph_components_dispose(GraphComponents* r) {
+    if (!r) return;
+    for (size_t i = 0; i < r->num_components; ++i) {
+        free_names_array(r->names[i], r->component_sizes[i]);
+    }
+    free(r->names);
+    free(r->component_sizes);
+    free(r);
+}
+
+int graph_components_reserve(GraphComponents* r, size_t want) {
+    if (r->capacity >= want) return 0;
+    size_t new_cap = (r->capacity == 0 ? 4 : r->capacity);
+    while (new_cap < want) new_cap *= 2;
+
+    size_t*  new_sizes = (size_t*)realloc(r->component_sizes, new_cap * sizeof(size_t));
+    char***  new_names = (char***)realloc(r->names,          new_cap * sizeof(char**));
+    if (!new_sizes || !new_names) {
+        free(new_sizes);
+        free(new_names);
         return -1;
-    
+    }
+    r->component_sizes = new_sizes;
+    r->names           = new_names;
+    r->capacity        = new_cap;
+    return 0;
+}
+
+int graph_components_push_back(GraphComponents* r, char** component_names, size_t component_size) {
+    if (graph_components_reserve(r, r->num_components + 1) != 0) {
+        // вызывающий должен сам освободить component_names при ошибке
+        return -1;
+    }
+    size_t idx = r->num_components;
+    r->component_sizes[idx] = component_size;
+    r->names[idx]           = component_names;
+    r->num_components++;
+    return 0;
+}
+
+int graph_positive_components(Graph* graph, int directed_mode, GraphComponents** out_result){
+    if (!graph || !out_result) return -1;
     *out_result = NULL;
 
     size_t total_vertices = 0;
-    GraphComponents* result = (GraphComponents*)calloc(1, sizeof(GraphComponents));
-    if (!result) { 
-        return -1; 
-    }
     Vertex** vertices = graph_vertices_to_array(graph, &total_vertices);
-    if (!vertices){
-        *out_result = result; 
+
+    GraphComponents* result = NULL;
+    if (graph_components_init(&result) != 0) { free(vertices); return -1; }
+
+    // пустой граф → пустой результат
+    if (!vertices || total_vertices == 0) {
+        *out_result = result;
+        free(vertices);
         return 0;
     }
 
-    if (!directed_mode){
-        // Слабосвязные компоненты на неориентированном положительном подграфе
+    if (!directed_mode) {
+        // --- слабосвязные по положит. рёбрам на неориентированном подграфе ---
         int* visited = (int*)calloc(total_vertices, sizeof(int));
-        if (!visited) { 
-            free(vertices); 
-            free(result); 
-            return -1; 
-        }
+        if (!visited) { free(vertices); graph_components_dispose(result); return -1; }
+
         for (size_t start = 0; start < total_vertices; ++start){
-            if (visited[start])
-                continue;
+            if (visited[start]) continue;
+
+            // BFS
             char** component_names = NULL; 
             size_t component_size = 0;
-            // BFS на неориентированном положительном подграфе
+
             int* queue = (int*)malloc(sizeof(int) * total_vertices);
+            if (!queue) { free(visited); free(vertices); graph_components_dispose(result); return -1; }
+
             int q_head = 0, q_tail = 0; 
             queue[q_tail++] = (int)start; 
             visited[start] = 1;
+
             while (q_head < q_tail) {
                 int current_index = queue[q_head++];
-                component_names_push(&component_names, &component_size, vertices[current_index]->name_of_person);
+
+                if (component_names_push(&component_names, &component_size, vertices[current_index]->name_of_person) != 0) {
+                    free(queue);
+                    free_names_array(component_names, component_size);
+                    free(visited); free(vertices); graph_components_dispose(result);
+                    return -1;
+                }
+
                 for (size_t other = 0; other < total_vertices; ++other){
                     if (visited[other]) continue;
                     if (positive_edge_exists(vertices[current_index], vertices[other]) ||
-                        positive_edge_exists(vertices[other],    vertices[current_index])){
-                        visited[other] = 1; queue[q_tail++] = (int)other;
+                        positive_edge_exists(vertices[other],    vertices[current_index])) {
+                        visited[other] = 1;
+                        queue[q_tail++] = (int)other;
                     }
                 }
             }
-            // Добавляем компонента в результат
-            size_t idx = result->num_components;
-            size_t* new_sizes  = (size_t*)realloc(result->component_sizes, (idx + 1) * sizeof(size_t));
-            char*** new_names  = (char***)realloc(result->names,           (idx + 1) * sizeof(char**));
-            if (!new_sizes || !new_names) { 
-                /* OOM: best effort */ 
+
+            free(queue);
+
+            if (graph_components_push_back(result, component_names, component_size) != 0) {
+                free_names_array(component_names, component_size);
+                free(visited); free(vertices); graph_components_dispose(result);
+                return -1;
             }
-            result->component_sizes = new_sizes; 
-            result->names = new_names;
-            result->component_sizes[idx] = component_size;
-            result->names[idx] = component_names;
-            result->num_components = idx + 1;
         }
         free(visited);
-    } else {
-        // Сильно связные компоненты положительного ориентированного подграфа (Косараджу)
+    } 
+    else {
+        // --- SCC по положительным рёбрам (Косараджу) ---
         int* visited = (int*)calloc(total_vertices, sizeof(int));
         int* order_indices = (int*)malloc(sizeof(int) * (total_vertices + 1)); // -1-terminated
         if (!visited || !order_indices) { 
-            free(vertices); 
-            free(result); 
-            free(visited); 
-            free(order_indices); 
+            free(visited); free(order_indices); free(vertices); graph_components_dispose(result); 
             return -1; 
         }
-        for (size_t i = 0; i <= total_vertices; i++) order_indices[i] = -1;
+        memset(order_indices, 0xFF, (total_vertices + 1) * sizeof(int)); // -1
+
         for (size_t i = 0; i < total_vertices; ++i) {
             if (!visited[i]) 
                 dfs_directed_positive(vertices, total_vertices, (int)i, visited, order_indices);
         }
-        // второй проход по обратному графу
+
         memset(visited, 0, sizeof(int) * total_vertices);
+
         for (int pos = (int)total_vertices - 1; pos >= 0; --pos) {
             int start_index = order_indices[pos]; 
             if (start_index < 0) continue;
             if (visited[start_index]) continue;
+
             char** component_names = NULL; 
             size_t component_size = 0;
-            dfs_directed_positive_transpose(vertices, total_vertices, start_index, visited, &component_names, &component_size);
-            size_t idx = result->num_components;
-            size_t* new_sizes  = (size_t*)realloc(result->component_sizes, (idx + 1) * sizeof(size_t));
-            char*** new_names  = (char***)realloc(result->names,          (idx + 1) * sizeof(char**));
-            if (!new_sizes || !new_names){ /* OOM best-effort */ }
-            result->component_sizes = new_sizes; 
-            result->names = new_names;
-            result->component_sizes[idx] = component_size; 
-            result->names[idx] = component_names;
-            result->num_components = idx + 1;
+            dfs_directed_positive_transpose(vertices, total_vertices, start_index,
+                                            visited, &component_names, &component_size);
+
+            if (graph_components_push_back(result, component_names, component_size) != 0) {
+                free_names_array(component_names, component_size);
+                free(visited); free(order_indices); free(vertices); graph_components_dispose(result);
+                return -1;
+            }
         }
+
         free(visited); 
         free(order_indices);
     }

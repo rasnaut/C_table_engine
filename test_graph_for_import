@@ -1,0 +1,52 @@
+# --- vertices ---
+V A1
+V A2
+V A3
+V A4
+V A5
+V A6
+V A7
+V A8
+V A9
+V A10
+V B1
+V B2
+V B3
+V B4
+V B5
+V B6
+V B7
+V B8
+V B9
+V B10
+
+# --- Group A: strongly connected via a positive cycle ---
+E A1 A2 5
+E A2 A3 4
+E A3 A4 6
+E A4 A5 3
+E A5 A6 7
+E A6 A7 2
+E A7 A8 8
+E A8 A9 5
+E A9 A10 4
+E A10 A1 3
+
+# Optional extra positive chords inside A (still SCC)
+E A1 A5 6
+E A3 A7 5
+
+# --- Group B: only weakly connected (positive chain forward only) ---
+E B1 B2 5
+E B2 B3 4
+E B3 B4 6
+E B4 B5 3
+E B5 B6 7
+E B6 B7 2
+E B7 B8 8
+E B8 B9 5
+E B9 B10 4
+
+# --- Cross-group edges (non-positive to keep positive components separate) ---
+E A3 B5 -2
+E B7 A2 0

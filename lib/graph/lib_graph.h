@@ -52,9 +52,15 @@ int graph_shortest_positive_chain(
 // 3) Компоненты положительной достижимости
 typedef struct GraphComponents {
     size_t   num_components;
+    size_t   capacity;         
     size_t*  component_sizes;  // len=num_components
     char***  names;            // names[i][j]
 } GraphComponents;
+
+int  graph_components_init(GraphComponents** out);
+void graph_components_dispose(GraphComponents* r);
+int  graph_components_reserve(GraphComponents* r, size_t want);
+int  graph_components_push_back(GraphComponents* r, char** component_names, size_t component_size);
 
 // directed_mode: 0 — слабосвязные на неориентированном положительном подграфе; 1 — SCC на ориентированном положительном подграфе
 int graph_positive_components(
