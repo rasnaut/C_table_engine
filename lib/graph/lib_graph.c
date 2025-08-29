@@ -37,6 +37,76 @@ static VertexNode* vertex_node_create(Vertex* vertex) {
     return node;
 }
 
+static int vertex_index_in_array(Vertex** vertices, size_t count, Vertex* target) {
+    for (size_t i = 0; i < count; ++i) if (vertices[i] == target) return (int)i;
+    return -1;
+}
+
+// =============================
+// Общие хелперы для алгоритмов
+static Vertex** graph_vertices_to_array(Graph* graph, size_t* out_count) {
+    if (out_count) 
+        *out_count = 0;
+    if (!graph || !graph->head || graph->size == 0) 
+        return NULL;
+    Vertex** vertices = (Vertex**)malloc(sizeof(Vertex*) * graph->size);
+    if (!vertices) 
+        return NULL;
+    VertexNode* current = graph->head;
+    for (size_t i = 0; i < graph->size; ++i) { 
+        vertices[i] = current->v; 
+        current = current->next; 
+    }
+    if (out_count) 
+        *out_count = graph->size;
+    return vertices;
+}
+
+static Vertex** create_vertex_array_and_find_src_dst(Graph* graph, VertexNode* src_node, VertexNode* dst_node, int* src_index, int* dst_index, size_t* total_vertices) {
+    Vertex** vertices = graph_vertices_to_array(graph, total_vertices);
+    if (!vertices) return NULL;
+
+    *src_index = vertex_index_in_array(vertices, *total_vertices, src_node->v);
+    *dst_index = vertex_index_in_array(vertices, *total_vertices, dst_node->v);
+    if (*src_index < 0 || *dst_index < 0) { free(vertices); return NULL; }
+
+    return vertices;
+}
+
+static int find_closest_unvisited_vertex(const int* distance, const int* visited, size_t total_vertices) {
+    int best_vertex = -1;
+        int best_dist = INT_MAX;
+        for (size_t i = 0; i < total_vertices; ++i) 
+            if (!visited[i] && distance[i] < best_dist) { 
+                best_dist = distance[i]; 
+                best_vertex = (int)i; 
+            }
+            
+    return best_vertex;
+}
+
+static int positive_edge_exists(Vertex* from, Vertex* to) {
+    if (!from || !to) return 0;
+    Edge* head_edge = from->edges.head;
+    if (!head_edge) return 0;
+    Edge* edge_iter = head_edge;
+    for (size_t i = 0; i < from->edges.size; ++i) {
+        if (edge_iter->to && edge_iter->to->vertex == to && edge_iter->weight > 0)
+            return 1;
+        edge_iter = edge_iter->next;
+    }
+    return 0;
+}
+
+static void names_array_push(char*** names_out, size_t* names_count, const char* name) {
+    char** grown = (char**)realloc(*names_out, (*names_count + 1) * sizeof(char*));
+    if (!grown) return; // best effort
+    *names_out = grown;
+    (*names_out)[*names_count] = strdup(name ? name : "");
+    if (!(*names_out)[*names_count]) return;
+    (*names_count)++;
+}
+
 Graph* graph_create(void) {
     Graph* graph = (Graph*)malloc(sizeof(Graph));
     if (!graph) return NULL;
@@ -143,53 +213,7 @@ int graph_remove_vertex(Graph* graph, const char* name_of_person) {
 size_t graph_size(const Graph* graph) { return graph ? graph->size : 0; }
 int    graph_is_empty(const Graph* graph) { return !graph || graph->size == 0; }
 
-// =============================
-// Общие хелперы для алгоритмов
 
-static Vertex** graph_vertices_to_array(Graph* graph, size_t* out_count) {
-    if (out_count) 
-        *out_count = 0;
-    if (!graph || !graph->head || graph->size == 0) 
-        return NULL;
-    Vertex** vertices = (Vertex**)malloc(sizeof(Vertex*) * graph->size);
-    if (!vertices) 
-        return NULL;
-    VertexNode* current = graph->head;
-    for (size_t i = 0; i < graph->size; ++i) { 
-        vertices[i] = current->v; 
-        current = current->next; 
-    }
-    if (out_count) 
-        *out_count = graph->size;
-    return vertices;
-}
-
-static int vertex_index_in_array(Vertex** vertices, size_t count, Vertex* target) {
-    for (size_t i = 0; i < count; ++i) if (vertices[i] == target) return (int)i;
-    return -1;
-}
-
-static int positive_edge_exists(Vertex* from, Vertex* to) {
-    if (!from || !to) return 0;
-    Edge* head_edge = from->edges.head;
-    if (!head_edge) return 0;
-    Edge* edge_iter = head_edge;
-    for (size_t i = 0; i < from->edges.size; ++i) {
-        if (edge_iter->to && edge_iter->to->vertex == to && edge_iter->weight > 0)
-            return 1;
-        edge_iter = edge_iter->next;
-    }
-    return 0;
-}
-
-static void names_array_push(char*** names_out, size_t* names_count, const char* name) {
-    char** grown = (char**)realloc(*names_out, (*names_count + 1) * sizeof(char*));
-    if (!grown) return; // best effort
-    *names_out = grown;
-    (*names_out)[*names_count] = strdup(name ? name : "");
-    if (!(*names_out)[*names_count]) return;
-    (*names_count)++;
-}
 
 // =============================
 // 1) BFS: знакомы не более чем через K рукопожатий
@@ -260,13 +284,16 @@ int graph_bfs_within_k(Graph* graph, const char* start_name, size_t max_hops, in
 // =============================
 // 2) Кратчайшая позитивная цепочка (Дейкстра)
 static int positive_edge_cost(int weight, int cost_mode) {
-    if (cost_mode == 0) return 1; // равные стоимости (кол-во звеньев)
-    int bounded = weight; 
-    if (bounded < 1) 
-        bounded = 1; 
-    if (bounded > 10) 
-        bounded = 10;
-    return 11 - bounded; // чем больше вес, тем дешевле
+    int bounded = weight;
+    if (bounded < 1) bounded = 1;
+    if (bounded > 10) bounded = 10;
+
+    switch (cost_mode) {
+        case 0:  return 1;               // минимум звеньев
+        case 1:  return 11 - bounded;    // «чем больше вес, тем дешевле»
+        case 2:  return bounded;         // минимум суммы весов
+        default: return 1;               // по умолчанию — как режим 0
+    }
 }
 
 int graph_shortest_positive_chain(Graph* graph,
@@ -286,12 +313,10 @@ int graph_shortest_positive_chain(Graph* graph,
     VertexNode* dst_node = graph_find_node(graph, dst_name);
     if (!src_node || !dst_node) return -1;
 
-    size_t total_vertices = 0; Vertex** vertices = graph_vertices_to_array(graph, &total_vertices);
-    if (!vertices) return 0;
-
-    int src_index = vertex_index_in_array(vertices, total_vertices, src_node->v);
-    int dst_index = vertex_index_in_array(vertices, total_vertices, dst_node->v);
-    if (src_index < 0 || dst_index < 0) { free(vertices); return -1; }
+    int src_index = -1, dst_index = -1;
+    size_t total_vertices = 0;
+    Vertex** vertices = create_vertex_array_and_find_src_dst(graph, src_node, dst_node, &src_index, &dst_index, &total_vertices);
+    if (!vertices) return -1;
 
     int* distance      = (int*)malloc(sizeof(int) * total_vertices);
     int* predecessor   = (int*)malloc(sizeof(int) * total_vertices);
@@ -311,24 +336,17 @@ int graph_shortest_positive_chain(Graph* graph,
     distance[src_index] = 0;
 
     for (size_t pass = 0; pass < total_vertices; ++pass) {
-        int best_vertex = -1; 
-        int best_dist = INT_MAX;
-        for (size_t i = 0; i < total_vertices; ++i) 
-            if (!visited[i] && distance[i] < best_dist) { 
-                best_dist = distance[i]; 
-                best_vertex = (int)i; 
-            }
+        int best_vertex = find_closest_unvisited_vertex(distance, visited, total_vertices);
 
         if (best_vertex == -1) 
             break;
         visited[best_vertex] = 1;
         if (best_vertex == dst_index) break; // кратчайший найден
 
-        Edge* head_edge = vertices[best_vertex]->edges.head;
-        if (!head_edge) continue;
-        Edge* edge_iter = head_edge;
+        Edge* edge_iter = vertices[best_vertex]->edges.head;
+        if (!edge_iter) continue;
         for (size_t step = 0; step < vertices[best_vertex]->edges.size; ++step) {
-            if (!edge_iter->to || !edge_iter->to->vertex || edge_iter->weight <= 0) { 
+            if (!edge_check_weight_more_then(edge_iter, 0)) { 
                 edge_iter = edge_iter->next; 
                 continue; 
             }
@@ -374,9 +392,6 @@ int graph_shortest_positive_chain(Graph* graph,
 
 // =============================
 // 3) Компоненты положительной достижимости
-
-
-
 static void dfs_directed_positive(Vertex** vertices, size_t count, int start_index, int* visited, int* order_indices){
     visited[start_index] = 1;
     Edge* head_edge = vertices[start_index]->edges.head;

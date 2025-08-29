@@ -57,3 +57,12 @@ int  edge_compare(const Edge* a, const Edge* b) {
     }
     return cmp; // Compare by name
 }
+
+int edge_check_weight_more_then(const Edge *edge, int threshold)
+{
+    if (!edge) return 0;
+    if (edge->to && edge->to->vertex) {
+        return edge->weight > threshold;
+    }
+    return 0;
+}

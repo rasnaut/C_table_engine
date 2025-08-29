@@ -15,5 +15,6 @@ void edge_dispose(Edge* edge); // делает release(to), не трогает 
 int  edge_print(const Edge* edge);
 // Сравнение для сортированной вставки: сперва по имени вершины назначения, затем по весу
 int  edge_compare(const Edge* a, const Edge* b);
+int edge_check_weight_more_then(const Edge* edge, int threshold);
 
 #endif // LIB_EDGE_H

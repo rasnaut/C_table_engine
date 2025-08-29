@@ -223,11 +223,11 @@ int dialogue_shortest_positive_path(Graph* g) {
     if (!g) { printf("❌ Graph not initialized\n"); return -1; }
     char* src = ask("Source person: ");
     char* dst = ask("Target person: ");
-    char* ms  = ask("Cost mode (0=min hops, 1=11-weight): ");
+    char* ms  = ask("Cost mode (0=min hops, 1=max weight, 2=min sum of weights): ");
     if (!src || !dst || !ms) { free(src); free(dst); free(ms); return -1; }
 
     int mode=0;
-    if (parse_int(ms, &mode) != 0 || (mode!=0 && mode!=1)) {
+    if (parse_int(ms, &mode) != 0 || (mode<0 && mode>2)) {
         printf("❌ Bad mode\n"); free(src); free(dst); free(ms); return -1;
     }
 
